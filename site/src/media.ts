@@ -23,7 +23,7 @@ export function createMedia(world: World | null, reduced: boolean) {
   return {
     show(step: number) { cur = step; apply(); },
     async load() {
-      try { const r = await fetch('/media/manifest.json', { cache: 'no-cache' }); if (r.ok) map = await r.json(); } catch { return; }
+      try { const r = await fetch(new URL('media/manifest.json', document.baseURI), { cache: 'no-cache' }); if (r.ok) map = await r.json(); } catch { return; }
       KEYS.forEach((k, i) => {
         const { fig, v } = slot(k); if (!fig || !v || !map[k]) return;
         v.addEventListener('loadeddata', () => { fig.dataset.ready = 'true'; world?.setHasMedia(i, true); }, { once: true });

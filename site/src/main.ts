@@ -19,7 +19,7 @@ import { runGate } from './gate';
 import type { World } from './gl/world';
 
 const root = document.documentElement;
-root.classList.replace('no-js', 'js');
+root.classList.remove('no-js'); root.classList.add('js');
 const reduced = reducedMotion();
 const audio = new AudioEngine();
 gsap.registerPlugin(ScrollTrigger);
@@ -49,7 +49,7 @@ async function boot() {
       world.onKick = () => audio.tick(0.035, 1800);
       const w = world;
       tasks.push(document.fonts.ready.then(() => w.init()));
-    } catch (e) { console.warn('WebGL world failed; falling back to DOM only', e); root.classList.replace('has-gl', 'no-gl'); world = null; }
+    } catch (e) { console.warn('WebGL world failed; falling back to DOM only', e); (root.classList.remove('has-gl'), root.classList.add('no-gl')); world = null; }
   }
 
   const grainTick = initGrain(qs<HTMLCanvasElement>('#grain')!, !reduced);
