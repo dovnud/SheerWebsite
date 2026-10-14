@@ -4,7 +4,7 @@ import fs from 'fs';
 const [out, base, mode = 'desktop'] = process.argv.slice(2); fs.mkdirSync(out, { recursive: true });
 const vp = mode === 'mobile' ? { width: 390, height: 844 } : { width: 1440, height: 900 };
 const b = await chromium.launch({ args: ['--use-gl=swiftshader', '--enable-webgl', '--ignore-gpu-blocklist', '--enable-unsafe-swiftshader'] });
-for (const v of ['halo', 'lens', 'curtain', 'ghost']) {
+for (const v of (process.env.VARIANTS || 'halo,lens,curtain,ghost').split(',')) {
   const p = await (await b.newContext({ viewport: vp, isMobile: mode === 'mobile', hasTouch: mode === 'mobile' })).newPage(); const errs = [];
   p.on('pageerror', (e) => errs.push(e.message.slice(0, 160)));
   await p.goto(`${base}?obj=${v}`); await p.locator('#enter').waitFor({ state: 'visible', timeout: 60000 }); await p.locator('#enter').click(); await p.waitForTimeout(5200);

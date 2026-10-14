@@ -1,11 +1,12 @@
 import * as THREE from 'three';
 import { toCreasedNormals } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
 import { haloGeometry } from './shapes';
+import { MONOGRAM } from './monogram-paths';
 
 /** Candidate hero objects, all procedural glass that refracts the headline behind it.
     Pick one with ?obj=halo|lens|curtain|ghost (or #lens etc. in the URL). */
-export type HeroVariant = 'halo' | 'lens' | 'curtain' | 'ghost';
-export const HERO_VARIANTS: HeroVariant[] = ['halo', 'lens', 'curtain', 'ghost'];
+export type HeroVariant = 'halo' | 'lens' | 'curtain' | 'ghost' | 'sd';
+export const HERO_VARIANTS: HeroVariant[] = ['halo', 'lens', 'curtain', 'ghost', 'sd'];
 
 export interface HeroObject {
   obj: THREE.Object3D;
@@ -44,6 +45,24 @@ function curtainGeometry(): THREE.BufferGeometry {
   return toCreasedNormals(g, 0.55);
 }
 
+/** SD monogram: her initials, the real Bodoni S and D outlines, extruded into thick bevelled glass. */
+function monogramGeometry(): THREE.BufferGeometry {
+  const shapes: THREE.Shape[] = [];
+  for (const k of ['S', 'D'] as const) {
+    const sp = new THREE.ShapePath();
+    for (const c of MONOGRAM[k]) {
+      if (c.type === 'M') sp.moveTo(c.x!, c.y!);
+      else if (c.type === 'L') sp.lineTo(c.x!, c.y!);
+      else if (c.type === 'Q') sp.quadraticCurveTo(c.x1!, c.y1!, c.x!, c.y!);
+      else if (c.type === 'C') sp.bezierCurveTo(c.x1!, c.y1!, c.x2!, c.y2!, c.x!, c.y!);
+    }
+    shapes.push(...sp.toShapes());
+  }
+  const g = new THREE.ExtrudeGeometry(shapes, { depth: 0.5, bevelEnabled: true, bevelThickness: 0.12, bevelSize: 0.07, bevelSegments: 8, curveSegments: 14 });
+  g.center();
+  return toCreasedNormals(g, 0.5);
+}
+
 /** Ghost light: a solid glass bulb on a dark screw base, with a small glowing filament (the single light left on in an empty theater). */
 function ghostGroup(glass: THREE.Material): THREE.Group {
   const prof: THREE.Vector2[] = [new THREE.Vector2(0, -1.2), new THREE.Vector2(0.4, -1.2), new THREE.Vector2(0.42, -0.95), new THREE.Vector2(0.55, -0.7)];
@@ -67,6 +86,10 @@ export function buildHeroObject(v: HeroVariant, glass: THREE.Material): HeroObje
   if (v === 'curtain') return {
     obj: new THREE.Mesh(curtainGeometry(), glass), size: 0.92,
     pose: (o, t, px, py, k, idle) => o.rotation.set(py * -0.08, Math.sin(t * 0.4) * 0.55 * idle + px * 0.5 + (1 - k) * -2.4, Math.sin(t * 0.2) * 0.04 * idle),
+  };
+  if (v === 'sd') return {
+    obj: new THREE.Mesh(monogramGeometry(), glass), size: 0.8,
+    pose: (o, t, px, py, k, idle) => o.rotation.set(py * -0.12 + (1 - k) * -1.2, Math.sin(t * 0.45) * 0.4 * idle + px * 0.5 + (1 - k) * 2.6, Math.sin(t * 0.3) * 0.03 * idle),
   };
   if (v === 'ghost') return {
     obj: ghostGroup(glass), size: 0.95,
