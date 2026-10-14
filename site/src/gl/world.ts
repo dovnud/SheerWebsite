@@ -2,6 +2,7 @@ import * as THREE from 'three';
 import { gsap } from 'gsap';
 import { RoomEnvironment } from 'three/examples/jsm/environments/RoomEnvironment.js';
 import { ringGeometry, asteriskGeometry, orbGeometry } from './shapes';
+import { LiquidPass } from './liquid';
 import { buildHeroObject, HERO_VARIANTS, type HeroObject, type HeroVariant } from './hero-objects';
 import { FooterPhysics } from './footer';
 import { clamp } from '../util';
@@ -42,8 +43,8 @@ export class World {
   private whiteEls = Array.from(document.querySelectorAll<HTMLElement>('.white-zone'));
   private pointer = { x: 0, y: 0, sx: 0, sy: 0, px: -999, py: -999 };
   private intro = { t: 0 };
-  /** liquid reveal: melt.p 0 = formed over the name, 1 = poured away */
-  private melt = { p: 0 }; private meltU = { value: 0 }; private timeU = { value: 0 }; private armed = true; private meltTl?: gsap.core.Timeline; private drops: THREE.Mesh[] = [];
+  /** liquid exit: the glass SD hands off to a screen-space liquid on first scroll, which drains away for good */
+  private liquid?: LiquidPass; liquidState: 'rest' | 'running' | 'gone' = 'rest'; private liquidTl?: gsap.core.Tween;
   private heroTex?: THREE.CanvasTexture;
   private lastScroll = -1; private dirty = true;
   ready = false;
@@ -73,20 +74,6 @@ export class World {
       color: 0xfff3ea, transmission: 1, thickness: 0.8, ior: 1.45, roughness: 0.12, metalness: 0,
       attenuationColor: new THREE.Color(0xffffff), attenuationDistance: Infinity, clearcoat: 0.7, clearcoatRoughness: 0.06, envMapIntensity: 0.75, specularIntensity: 0.9,
     });
-    glass.customProgramCacheKey = () => 'melt-glass';
-    glass.onBeforeCompile = (shader) => {
-      shader.uniforms.uMelt = this.meltU; shader.uniforms.uTime = this.timeU;
-      shader.vertexShader = 'uniform float uMelt;\nuniform float uTime;\n' + shader.vertexShader.replace('#include <begin_vertex>', `#include <begin_vertex>
-        { float h = clamp((transformed.y + 1.2) / 2.4, 0.0, 1.0);
-          float m = uMelt;
-          float w = sin(transformed.x * 3.2 + uTime * 4.0 + transformed.y * 2.2) * 0.09 * m;
-          float drip = pow(1.0 - h, 1.5) * m * (1.1 + 0.9 * sin(transformed.x * 4.3 + 1.7));
-          transformed.y -= drip + m * m * 0.5;
-          transformed.x += w + transformed.x * m * 0.18;
-          transformed.z += w * 0.6; }`);
-    };
-    const dropMat = glass.clone(); dropMat.onBeforeCompile = () => undefined;
-    for (let i = 0; i < 7; i++) { const d = new THREE.Mesh(new THREE.SphereGeometry(1, 32, 24), dropMat); d.visible = false; this.hero.add(d); this.drops.push(d); }
     const asked = (new URLSearchParams(location.search).get('obj') || location.hash.replace('#', '')) as HeroVariant;
     this.heroObj = buildHeroObject(HERO_VARIANTS.includes(asked) ? asked : 'sd', glass);
     this.chevron = this.heroObj.obj;
@@ -96,6 +83,7 @@ export class World {
     const dark = new THREE.MeshStandardMaterial({ color: 0x0c0c0c, roughness: 0.34, metalness: 0.1, envMapIntensity: 0.8 });
     [ringGeometry(), asteriskGeometry(), orbGeometry()].forEach((g) => { const m = new THREE.Mesh(g, dark); m.scale.setScalar(0.0001); this.svc.add(m); this.svcObjs.push(m); });
 
+    this.liquid = new LiquidPass(this.vw, this.vh, this.dpr); this.syncLiquid();
     this.resize();
     this.footer.onKick = () => this.onKick?.();
     await this.footer.init(this.vw, Math.max(this.footerEl.offsetHeight, this.vh));
@@ -134,8 +122,10 @@ export class World {
       this.chevron.scale.setScalar(this.chevronBase() * this.heroObj.size);
     }
     this.footer.layout(this.vw, Math.max(this.footerEl.offsetHeight, this.vh));
+    this.syncLiquid();
     this.dirty = true;
   }
+  private syncLiquid() { if (this.liquid && this.heroObj) this.liquid.resize(this.vw, this.vh, this.dpr, this.chevronBase() * this.heroObj.size * 1.043); }
 
   setPointer(cx: number, cy: number) {
     this.pointer.x = (cx / this.vw) * 2 - 1; this.pointer.y = -((cy / this.vh) * 2 - 1); this.pointer.px = cx; this.pointer.py = cy; this.dirty = true;
@@ -150,18 +140,14 @@ export class World {
     this.dirty = true;
   }
   isHeroIn() { return this.intro.t > 0; }
-  /** Review hook: freeze the liquid at a chosen point (0 formed, 1 poured away). */
-  debugMelt(p: number) { this.meltTl?.kill(); this.armed = false; this.melt.p = p; this.dirty = true; }
-  /** First scroll away from the top: the glass monogram melts off, the name stays clear for a beat, then the metal flows back and re-forms. */
+  /** Review hook: freeze the liquid exit at a chosen point (0 just started, 1 gone). */
+  debugLiquid(p: number) { this.liquidTl?.kill(); this.liquidState = 'running'; if (this.liquid) this.liquid.P.value = p; this.dirty = true; }
+  /** First scroll away from the top: the glass SD turns to liquid, crawls across the screen and drains away. It does not come back. */
   onScroll(y: number) {
-    if (this.o.reduced || !this.ready) return;
-    if (y <= 2) { this.armed = true; return; }
-    if (!this.armed || this.intro.t < 0.95 || y > this.vh * 0.7) return;
-    this.armed = false; this.meltTl?.kill();
-    this.meltTl = gsap.timeline({ onUpdate: () => { this.dirty = true; } })
-      .to(this.melt, { p: 1, duration: 1.7, ease: 'power2.inOut' })
-      .to(this.melt, { p: 1, duration: 1.3 })
-      .to(this.melt, { p: 0, duration: 2.0, ease: 'power2.inOut' });
+    if (!this.ready || this.liquidState !== 'rest' || this.intro.t < 0.95 || y <= 2 || y > this.vh * 0.7) return;
+    if (this.o.reduced || !this.liquid) { this.liquidState = 'gone'; this.dirty = true; return; }   // reduced motion: it simply goes
+    this.liquidState = 'running'; this.liquid.P.value = 0;
+    this.liquidTl = gsap.to(this.liquid.P, { value: 1, duration: 3.8, ease: 'power1.in', onUpdate: () => { this.dirty = true; }, onComplete: () => { this.liquidState = 'gone'; this.dirty = true; } });
   }
 
   update(time: number) {
@@ -184,20 +170,10 @@ export class World {
     const k = this.intro.t;
     const idle = o.reduced ? 0 : 1;
     this.heroObj.pose(this.chevron, t, this.pointer.sx * idle, this.pointer.sy * idle, k, idle);
-    const p = this.melt.p; this.meltU.value = p; this.timeU.value = t;
     const s = this.chevronBase() * this.heroObj.size * (0.2 + 0.8 * k), bob = Math.sin(t * 0.6) * 14 * idle;
-    const exit = THREE.MathUtils.smoothstep(p, 0.3, 1);                         // the whole mass pours off the bottom
-    this.chevron.position.y = bob - exit * vh * 1.05;
-    this.chevron.scale.set(s * (1 - 0.55 * exit), s * (1 + 0.35 * exit), s * (1 - 0.3 * exit));
-    this.chevron.rotation.z += Math.sin(t * 3 + p * 6) * 0.04 * p;
-    this.chevron.visible = k > 0.01;
-    const n = this.drops.length;
-    this.drops.forEach((d, i) => {                                               // droplets fall as it melts and rise as it re-forms
-      const dp = THREE.MathUtils.clamp((p - 0.1 - i * 0.07) / 0.55, 0, 1), r = s * (0.1 + 0.07 * (((i * 37) % 5) / 4));
-      d.visible = k > 0.5 && dp > 0.001 && dp < 0.999;
-      d.position.set((i / (n - 1) - 0.5) * s * 3.2 + Math.sin(i * 2.1) * s * 0.2, -s * 1.15 + bob - dp * dp * vh * 1.25, 70);
-      d.scale.set(r * (1 - 0.3 * dp), r * (1 + 1.8 * dp), r * (1 - 0.3 * dp));
-    });
+    this.chevron.position.y = bob;
+    this.chevron.scale.setScalar(s);
+    this.chevron.visible = k > 0.01 && this.liquidState === 'rest';
     (this.plane.material as THREE.MeshBasicMaterial).opacity = 1;
 
     // services anchored to the pinned frame
@@ -223,7 +199,8 @@ export class World {
       if (!o.reduced) this.footer.step(this.pointer.px > -900 ? { x: this.pointer.px, y: this.pointer.py - fr.top } : null);
       this.footer.sync();
     }
-    this.renderer.render(this.scene, this.camera);
+    if (this.liquidState === 'running' && this.liquid) this.liquid.render(this.renderer, this.scene, this.camera, t);
+    else this.renderer.render(this.scene, this.camera);
   }
 }
 
