@@ -1,0 +1,194 @@
+<!doctype html>
+<html lang="en" class="no-js">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>BRAND.STUDIO — replica scaffold (internal)</title>
+<meta name="robots" content="noindex,nofollow">
+<meta name="theme-color" content="#FF4C00">
+<meta name="description" content="Internal clean-room replica scaffold. Placeholder content only. Not for publication.">
+<link rel="icon" href="data:,">
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+
+<!-- ENTER gate -->
+<section id="gate" class="gate" aria-label="Loading">
+  <div class="gate-inner">
+    <svg class="gate-mark" viewBox="0 0 640 90" role="img" aria-label="BRAND.STUDIO">
+      <text x="320" y="68" text-anchor="middle" class="gate-mark-text">BRAND.STUDIO</text>
+    </svg>
+    <div class="gate-count b1" aria-live="polite"><span id="gate-count">000</span></div>
+    <button id="enter" class="btn-br b1" type="button" hidden><span class="br">[</span><span>ENTER</span><span class="br">]</span></button>
+  </div>
+</section>
+<div id="wipe" class="wipe" aria-hidden="true"></div>
+
+<canvas id="gl" class="gl" aria-hidden="true"></canvas>
+<canvas id="trail-white" class="trail" aria-hidden="true"></canvas>
+<canvas id="trail-orange" class="trail" aria-hidden="true"></canvas>
+<div id="cursor" class="cursor" aria-hidden="true"><i></i></div>
+<canvas id="grain" class="grain" aria-hidden="true"></canvas>
+
+<header class="site-header" id="site-header">
+  <a class="h-left b1" href="#top">STUDIO</a>
+  <a class="h-mark" href="#top" aria-label="BRAND.STUDIO — top">BRAND.STUDIO</a>
+  <div class="h-ctl b1">
+    <button id="sound" class="btn-br" type="button" aria-pressed="true"><span class="br">[</span><span id="sound-label">SOUND ON</span><span class="br">]</span></button>
+    <span id="counter" class="counter" aria-hidden="true">[ 001 ]</span>
+  </div>
+  <button id="contact-open" class="h-contact b1" type="button" aria-haspopup="dialog" aria-controls="contact"><span class="only-d">CONTACT</span><span class="only-m">MENU</span></button>
+</header>
+
+<div class="bottom" id="bottom">
+  <span class="b1 scroll-hint">SCROLL FOR MORE</span>
+  <button id="ar" class="btn-br b1" type="button" aria-expanded="false" aria-controls="ar-panel"><span class="br">[</span><span>AR</span><span class="br">]</span></button>
+</div>
+<div id="ar-panel" class="ar-panel" hidden>
+  <canvas id="qr" width="200" height="200" aria-label="QR code for this page"></canvas>
+  <p class="b6">PLACEHOLDER — SCAN TO CONTINUE ON YOUR PHONE</p>
+</div>
+
+<main id="main">
+  <h1 class="sr-hero">Your bold headline goes here</h1>
+
+  <section class="hero" id="top" data-hero aria-hidden="false"></section>
+
+  <section class="sub grid pad" data-sub>
+    <div class="tw d3" data-typewriter>
+      <p>This is placeholder copy. It stands where the studio would describe its outlook, in a few sentences, set in the sans at display size.</p>
+      <p>A second paragraph follows, still placeholder, still ready to be replaced.</p>
+    </div>
+  </section>
+
+  <div class="white-zone" id="white-zone">
+    <section class="statement pad" data-statement>
+      <div class="just only-d d0">
+        <span class="line" style="padding-left:1.3em"><span>With a</span><span>pen</span></span>
+        <span class="line"><span>in hand,</span><span>you</span></span>
+        <span class="line"><span>can now</span><span>step</span></span>
+        <span class="line gap"><span>into any</span><span>story.</span></span>
+        <span class="line"><span>The feeling</span><span>is</span></span>
+        <span class="line"><span>larger</span><span>than</span></span>
+        <span class="line gap"><span>the page.</span></span>
+        <span class="line" style="padding-left:1.3em"><span>Write your</span><span>own</span></span>
+        <span class="line"><span>words, set</span><span>large,</span></span>
+        <span class="line"><span>right</span><span>here.</span></span>
+      </div>
+      <div class="just only-m d0">
+        <span class="line" style="padding-left:.5em"><span>With a</span></span>
+        <span class="line"><span>pen</span></span>
+        <span class="line"><span>in hand,</span></span>
+        <span class="line"><span>you can</span></span>
+        <span class="line"><span>now step</span></span>
+        <span class="line"><span>into any</span></span>
+        <span class="line"><span>story.</span></span>
+        <span class="line"><span>The</span></span>
+        <span class="line"><span>feeling</span></span>
+        <span class="line"><span>is</span></span>
+        <span class="line"><span>larger</span></span>
+        <span class="line"><span>than the</span></span>
+        <span class="line"><span>page.</span></span>
+        <span class="line"><span>Write</span></span>
+        <span class="line"><span>your own</span></span>
+        <span class="line"><span>words,</span></span>
+        <span class="line"><span>set</span></span>
+        <span class="line"><span>large,</span></span>
+        <span class="line"><span>right here.</span></span>
+      </div>
+    </section>
+
+    <section class="scratch" id="scratch" data-scratch>
+      <canvas id="scratch-canvas" aria-hidden="true"></canvas>
+      <p class="label b1">SCRATCH AROUND</p>
+      <div class="grid pad scratch-copy">
+        <div class="tw d3" data-typewriter><p>This line is placeholder copy beside an interactive canvas. Replace it with your own words.</p></div>
+      </div>
+    </section>
+  </div>
+
+  <section class="services" id="services" data-services>
+    <div class="services-pin">
+      <p class="label b1">WHAT WE DO</p>
+      <div class="svc-head d4" aria-live="polite">
+        <span class="svc-num"><span>00</span><span class="roll"><span>1</span><span>2</span><span>3</span></span></span>
+        <span class="svc-titles">
+          <span class="t on" data-title>Alpha</span>
+          <span class="t" data-title>Beta</span>
+          <span class="t" data-title>Gamma</span>
+        </span>
+      </div>
+      <hr class="rule">
+      <div class="svc-body grid pad">
+        <div class="svc-desc b1">
+          <p data-desc class="on">We<br>name a placeholder<br>describe it in a few lines<br>and move to the next</p>
+          <p data-desc>We<br>shape a second placeholder<br>in a few more lines<br>before moving on</p>
+          <p data-desc>We<br>land a third placeholder<br>with a closing line<br>and a hand-off</p>
+        </div>
+        <ul class="svc-list b1">
+          <li data-list class="on"><span>Capability one</span><span>Capability two</span><span>Capability three</span><span>Capability four</span><span>Capability five</span></li>
+          <li data-list><span>Capability six</span><span>Capability seven</span><span>Capability eight</span><span>Capability nine</span></li>
+          <li data-list><span>Capability ten</span><span>Capability eleven</span><span>Capability twelve</span></li>
+        </ul>
+        <div class="svc-nav b1"><button id="svc-prev" type="button" class="lnk">Prev</button><span>/</span><button id="svc-next" type="button" class="lnk">Next</button></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="statement2 pad" data-statement2>
+    <div class="just only-d d0">
+        <span class="line" style="padding-left:3.7em"><span>Words</span><span>for a</span></span>
+        <span class="line"><span>closing</span><span>line,</span></span>
+        <span class="line"><span>placeholder</span><span>here</span></span>
+        <span class="line"><span>where the</span><span>page</span></span>
+        <span class="line"><span>keeps going.</span></span>
+      </div>
+      <div class="just only-m d0">
+        <span class="line end"><span>Words</span></span>
+        <span class="line"><span>for a</span></span>
+        <span class="line"><span>closing</span></span>
+        <span class="line"><span>line,</span></span>
+        <span class="line"><span>place-</span></span>
+        <span class="line"><span>holder</span></span>
+        <span class="line"><span>where</span></span>
+        <span class="line"><span>the page</span></span>
+        <span class="line"><span>keeps</span></span>
+        <span class="line"><span>going.</span></span>
+      </div>
+    <div class="grid pad closing"><div class="tw d3 up" data-typewriter><p>One more placeholder sentence, set in capitals, to hold the position of a closing line.</p></div></div>
+  </section>
+
+  <footer class="footer" id="footer" data-footer>
+    <div class="contact-inner grid pad" data-contact-src>
+      <span class="person p1 b1">Person One<br>Role Placeholder</span>
+      <span class="person p2 b1">Person Two<br>Role Placeholder</span>
+      <div class="colophon b1">
+        <p>City Placeholder</p>
+        <p>+00 000 000 0000</p>
+        <p><a class="lnk" href="mailto:hello@example.com">hello@example.com</a></p>
+        <p>00 Placeholder Street<br>Placeholder Postcode<br>Country</p>
+        <p class="credits">© 0000 Brand — placeholder, all rights reserved</p>
+      </div>
+      <div class="big-links d2">
+        <a class="lnk" href="#top">Studio</a>
+        <a class="lnk" href="mailto:hello@example.com">Let's connect</a>
+      </div>
+      <form class="signup" novalidate>
+        <p class="b6">PLACEHOLDER — SIGN UP BOX (NOT CONNECTED)</p>
+        <label class="field b5"><span class="br">[</span><input type="email" name="email" placeholder="Enter your email address" autocomplete="email" aria-label="Email address (placeholder form)"><span class="br">]</span></label>
+        <p class="signup-msg b6" role="status"></p>
+      </form>
+    </div>
+    <p class="foot-mark" aria-hidden="true">BRAND.STUDIO</p>
+  </footer>
+</main>
+
+<div id="contact" class="contact" role="dialog" aria-modal="true" aria-label="Contact" hidden>
+  <div class="contact-body"></div>
+  <div class="contact-btns b3"><button id="contact-close" type="button" class="lnk" aria-label="Close the contact overlay">Close</button></div>
+</div>
+
+<noscript><style>#gate,#wipe,.gl,.trail,.cursor,.grain{display:none!important}.sr-hero{position:static!important;clip:auto!important;width:auto!important;height:auto!important;margin:22px!important;font-size:64px;line-height:.95}</style></noscript>
+<script type="module" src="/src/main.ts"></script>
+</body>
+</html>
