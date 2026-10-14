@@ -3,7 +3,7 @@ name: Deploy site to GitHub Pages
 on:
   workflow_dispatch:
   push:
-    branches: [main, claude/session-continuation-check-hwofah]
+    branches: [main]
 permissions: { contents: read, pages: write, id-token: write }
 concurrency: { group: pages, cancel-in-progress: true }
 jobs:
@@ -12,8 +12,6 @@ jobs:
     defaults: { run: { working-directory: site } }
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/configure-pages@v5
-        with: { enablement: true }
       - uses: actions/setup-node@v4
         with: { node-version: 22, cache: npm, cache-dependency-path: site/package-lock.json }
       - run: npm ci
