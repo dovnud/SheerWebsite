@@ -88,7 +88,7 @@ export function buildHeroObject(v: HeroVariant, glass: THREE.Material): HeroObje
     pose: (o, t, px, py, k, idle) => o.rotation.set(py * -0.08, Math.sin(t * 0.4) * 0.55 * idle + px * 0.5 + (1 - k) * -2.4, Math.sin(t * 0.2) * 0.04 * idle),
   };
   if (v === 'sd') return {
-    obj: new THREE.Mesh(monogramGeometry(), glass), size: 0.8,
+    obj: new THREE.Mesh(monogramGeometry(), glass), size: 0.85,
     pose: (o, t, px, py, k, idle) => o.rotation.set(py * -0.12 + (1 - k) * -1.2, Math.sin(t * 0.45) * 0.4 * idle + px * 0.5 + (1 - k) * 2.6, Math.sin(t * 0.3) * 0.03 * idle),
   };
   if (v === 'ghost') return {

@@ -13,3 +13,5 @@ npm run preview    # serve dist/ on :4173
 - **Deploy**: Cloudflare Pages, build `npm run build`, root `site`, output `dist`. Headers are in `public/_headers`.
 - **Degrades gracefully**: `prefers-reduced-motion` (no smooth scroll, no pin, no trail, static frame), JavaScript disabled (all copy readable), WebGL unavailable (plain DOM), and a gate that cannot trap a visitor.
 - **Checks** (headless Chromium, `tools/`): `shoot.mjs` (renders at desktop/mobile), `shoot-fallbacks.mjs` (reduced motion, no-JS, overflow at 320–1440 px), `make-og.mjs` (social image).
+
+- **Hero object**: the glass SD monogram (`src/gl/hero-objects.ts`, outlines in `src/gl/monogram-paths.ts`, regenerate with `node tools/make-monogram.mjs 700`). Alternatives via `?obj=lens|curtain|ghost|halo`. The liquid reveal lives in `src/gl/world.ts` (`onScroll`); `tools/shoot-melt.mjs` captures its stages.

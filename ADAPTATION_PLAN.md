@@ -9,7 +9,8 @@ so each call can be reversed later. Evidence for every claim about the reference
 | # | Decision | Why |
 |---|---|---|
 | 1 | **Keep the reference's real profile**: click-to-enter gate, shader background, glass 3D hero, pinned chapters, physics footer, grain, pointer trail, synthesised sound. | The teardown showed these are what make the original feel expensive (silence before the click, one accent colour, hard colour cuts, long pin, tactile 3D). Dropping them would drop the quality bar. |
-| 2 | **Hero object: a glass halo (thick bevelled ring), not KODE's chevron.** | The chevron is KODE's logo shape. A ring keeps the mechanism (glass refracting giant type) without copying their mark. It also reads as a stage halo. |
+| 2 | **Hero object: a glass SD monogram, chosen by the owner from four options (stage-light lens, fluted curtain, ghost light, SD).** The outlines are the real Bodoni S and D, extruded into bevelled glass that refracts her name. | KODE's chevron is their logo, so it is not copied. The owner picked SD for being unmistakably hers. The other three remain switchable with `?obj=lens|curtain|ghost|halo` for later; renders are in `docs/hero-options/`. |
+| 2b | **Liquid reveal on first scroll.** The first scroll away from the top melts the glass SD like liquid metal (it sags, drips, and pours off the bottom), the name stays fully clear for about a second, then the metal flows back up and re-forms over it. Runs once per return to the top; disabled under reduced motion. | Owner request, in the spirit of the liquid-metal reference. Implemented as a vertex-shader melt on the glass plus falling droplets, timed melt 1.7 s, hold 1.3 s, re-form 2.0 s. |
 | 3 | **Hero headline is her name**, `SHEER` / `DAVIDAI`, in the display serif; tagline `Producer \| Director & Choreographer` and the `(SHIR)` pronunciation under it. | Brand spelling is "Sheer"; the pronunciation is in the verified facts. |
 | 4 | **Productions become three pinned full-screen chapters** (ROUGE, WOW, Extravaganza). **This is an invention on top of the reference**, which has no work pages. | The reference's pinned "Ideate / Create / Deliver" section is the nearest mechanism (numeral roll, per-character title swap, Prev/Next, one 3D object per step), and her three productions each carry real proof. Reusing the mechanism keeps the single-page feel and avoids template-style work pages. |
 | 5 | **Real show media plugs into each chapter automatically** (`public/media/manifest.json`). Until a file exists, the chapter shows an abstract black 3D object. **No stock or generated imagery of people anywhere.** | Hard constraint. The site is fully designed to work without media and gets better the moment real footage exists. |
@@ -29,7 +30,7 @@ so each call can be reversed later. Evidence for every claim about the reference
 | Single page, no work pages | Yes | Single page | The three production chapters are invented (decision 4). |
 | Click-to-enter gate, real asset counter, wordmark draws in | Yes | Gate with her name; the counter tracks fonts + WebGL init | Reference's Lottie logo replaced with an SVG stroke draw. |
 | Orange wipe into hero, sound starts on the click | Yes | Same | — |
-| Hero: shader gradient, giant serif, glass 3D | Yes | Gradient + `SHEER DAVIDAI` + glass halo | Chevron replaced (decision 2). |
+| Hero: shader gradient, giant serif, glass 3D | Yes | Gradient + `SHEER DAVIDAI` + glass SD monogram with a liquid reveal | Chevron replaced (decision 2); the reveal is the owner's addition. |
 | Palette: black, white, one orange `#FF4C00` | Yes | Same three colours + the same orange | Orange is the reference's brand colour; kept because it is the look the owner asked for. Her own palette can replace it with one variable change. |
 | Fluid type scale (display 60→120 px, numerals up to 200 px, body 14–16 px) | Yes | Same measured scale | — |
 | Statement panels on white, justified per-word lines, hard colour cuts | Yes | "Vegas is the proof. New work is the destination."; "Kept running while others were dark."; "New York." | Copy invented to carry verified facts. |
@@ -53,7 +54,7 @@ so each call can be reversed later. Evidence for every claim about the reference
 One page. Colour is the chapter marker (orange → white → orange → white → orange → white → black).
 
 1. **Gate** (black): her name draws in, `[ ENTER ]`, sound unlocks.
-2. **Opening** (orange): `SHEER DAVIDAI` with the glass halo, tagline, `Las Vegas` in the bar.
+2. **Opening** (orange): `SHEER DAVIDAI` with the glass SD monogram over it, tagline, `Las Vegas` in the bar. First scroll: the SD melts away, the name shows, the SD re-forms.
 3. **The proof, in a paragraph** (orange): the two current roles, the combined scale, in-house development.
 4. **"Vegas is the proof. New work is the destination."** (white) and the **scratch canvas** (white): in-house development, workshops, readings, revision.
 5. **The productions** (orange, pinned, about 9 screens): ROUGE → WOW → Extravaganza, each with her role and the verified facts. Real footage appears here.

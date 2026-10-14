@@ -82,6 +82,7 @@ async function boot() {
 
   // pointer + frame loop
   addEventListener('pointermove', (e) => world?.setPointer(e.clientX, e.clientY), { passive: true });
+  addEventListener('scroll', () => world?.onScroll(scrollY), { passive: true });
   addEventListener('resize', () => { world?.resize(); ScrollTrigger.refresh(); });
   gsap.ticker.add((time) => { world?.update(time); trailTick?.(performance.now()); grainTick?.(); });
 
