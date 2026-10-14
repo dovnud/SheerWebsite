@@ -78,13 +78,9 @@ export class World {
 
     this.resize();
     this.footer.onKick = () => this.onKick?.();
-    this.ready = true;
-  }
-  /** Rapier is ~1.7 MB gzipped: load it after ENTER, off the critical path. */
-  async initPhysics() {
     await this.footer.init(this.vw, Math.max(this.footerEl.offsetHeight, this.vh));
     if (this.o.reduced) this.footer.settle();
-    this.dirty = true;
+    this.ready = true;
   }
   onKick?: () => void;
 

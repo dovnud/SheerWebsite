@@ -15,7 +15,6 @@
     "vite": "^8.3.4"
   },
   "dependencies": {
-    "@dimforge/rapier3d-compat": "^0.21.0",
     "@fontsource/bodoni-moda": "^5.3.0",
     "@fontsource/figtree": "^5.3.0",
     "@fontsource/gloock": "^5.3.0",

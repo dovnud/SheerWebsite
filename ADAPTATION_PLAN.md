@@ -18,7 +18,7 @@ so each call can be reversed later. Evidence for every claim about the reference
 | 8 | **Numbers appear only inside sentences** (`$8M+`, `80+`, `15–20 shows a week`, `13 years`, `30+ countries`). No stats band, no icon cards. | Hard constraint. |
 | 9 | **The reference's `[ AR ]` becomes `[ PHONE ]`**: a QR of the live URL on desktop. | There is no AR experience to hand off to; the QR keeps the pattern honestly. |
 | 10 | **Fonts: open-source stand-ins, Bodoni Moda (display) + Instrument Sans (UI/body).** | Closest open match found in the type lab (`docs/replica-evidence/type-lab.jpg`). Nothing purchased. See §6 for what is lost and the licensed alternative. |
-| 11 | **Stack: Vite + TypeScript + three.js + GSAP/ScrollTrigger + Lenis + Rapier.** Not Nuxt. | Same libraries as the reference. The site is one static page with no data; Nuxt would add a framework with nothing to do. |
+| 11 | **Stack: Vite + TypeScript + three.js + GSAP/ScrollTrigger + Lenis, with a hand-written physics solver instead of Rapier.** Not Nuxt. | Same libraries as the reference except physics. The site is one static page with no data; Nuxt would add a framework with nothing to do. Rapier shipped as a 4.3 MB WebAssembly blob (1.7 MB gzipped) that a strict content-security policy can block; the footer pile is 26 spheres, so a ~90-line solver looks the same, costs a few KB and runs anywhere. Total JavaScript is now about 215 KB gzipped. |
 | 12 | **Deploy target: Cloudflare Pages**, static `dist/`. Config and a manual workflow are in the repo; **I did not deploy** (no credentials; not mine to publish without the owner's account). | See §5. |
 | 13 | **Copy is third-person, declarative, and uses only the verified facts.** No quotes, no testimonials, no invented dates. | Hard constraint. Positioning lines ("Vegas is the proof. New work is the destination.") restate the brief's strategic framing; they are drafts for her to approve. |
 
@@ -37,7 +37,7 @@ so each call can be reversed later. Evidence for every claim about the reference
 | "Scratch around" canvas | Yes | Reveals WORKSHOP / READING / REVISION | Meaning added (decision 6). |
 | Pinned 3-step services section | Yes | Productions chapters | The reference lists capabilities; ours lists verified facts per production. |
 | Per-step 3D object | Partly | Abstract black objects until real footage exists | Reference objects were commissioned models; ours are procedural primitives. |
-| Physics footer pile + giant wordmark + contact | Yes | Pile + `SHEER DAVIDAI` + email | The reference's newsletter box, studio address and team list are dropped: she is one person and has not asked for a mailing list. |
+| Physics footer pile (the reference uses Rapier; ours is a custom solver) + giant wordmark + contact | Yes | Pile + `SHEER DAVIDAI` + email | The reference's newsletter box, studio address and team list are dropped: she is one person and has not asked for a mailing list. |
 | CONTACT opens a fullscreen overlay | Yes | Same overlay (same markup as the footer) | — |
 | Section counter `[ 001 ]–[ 099 ]` | Yes | Same (scroll percentage) | — |
 | Two-canvas pointer trail, dot-in-ring cursor | Yes (desktop only) | Same | — |
@@ -83,7 +83,7 @@ Where to put files and how to switch a chapter on: `site/public/media/README.md`
 
 - **Repo**: `site/` = the site (`index.html`, `src/` modules for gate, world, services, reveals, scratch, trail, audio, media, contact; `public/` static files; `tools/` render scripts).
   `replica/` = the clean-room scaffold, kept as a reference.
-- **Animation approach**: Lenis (smooth wheel, native touch) driving GSAP ScrollTrigger; one fixed WebGL canvas for the background, hero and chapter objects; Rapier physics loaded after ENTER.
+- **Animation approach**: Lenis (smooth wheel, native touch) driving GSAP ScrollTrigger; one fixed WebGL canvas for the background, hero and chapter objects; a small custom sphere solver for the footer pile.
 - **Iteration loop used**: build → render at 1440×900 and 390×844 in headless Chromium → review screenshots → adjust (screenshots in `docs/site-evidence/`).
 - **Deploy to Cloudflare Pages**: build command `npm run build`, root `site`, output `dist`. A manual workflow is in `.github/workflows/deploy-site.yml` and needs `CLOUDFLARE_API_TOKEN` and `CLOUDFLARE_ACCOUNT_ID` secrets. Social-image URLs use `SITE_URL` (default `https://sheerdavidai.com`).
   **Not deployed by me.**
@@ -121,10 +121,17 @@ All sources are the owner's brief. "Interpretation" marks the places where I had
 
 Nothing on the page is a quote, testimonial, press line or invented credit.
 
-## 8. For the owner (none of this blocks)
+## 8. Open items, with the call I made
 
-1. **Real show media** (§4): the biggest single upgrade.
-2. **Approve the positioning copy** and the choice to omit the Lincoln Center line.
-3. **Domain**: set `SITE_URL` once `sheerdavidai.com` is bought; deploy with the manual workflow or Cloudflare's Git integration.
-4. **Fonts**: buy the commercial pair only if exact fidelity matters.
-5. **Confirm** that "$8M+ / 80+ / 15–20 shows" cover both productions combined, and Sheer's title at Extravaganza.
+Nothing here blocks the site. Each item has a default that ships today and a one-step change.
+
+| Item | Call made | How to change it later |
+|---|---|---|
+| Real show footage | Chapters show abstract 3D objects until footage exists; the slot activates automatically. | Drop files in `site/public/media/` and edit `manifest.json`. Shot list in §4. |
+| Positioning copy | Shipped as written in §7; the Lincoln Center line is omitted. | Edit `index.html`. |
+| Scope of "$8M+ / 80+ / 15–20 shows" | Read as covering ROUGE and WOW together, matching the brief's word "combined". | Edit the three places in `index.html` if the brief meant something else. |
+| Her title at Extravaganza | Not stated in the brief, so none is shown. | Add it to the chapter text. |
+| Fonts | Open-source stand-ins (§6). Nothing purchased. | Swap imports and two CSS variables. |
+| Domain and social image | `https://sheerdavidai.com` is the default `SITE_URL`; override at build time. | `SITE_URL=… npm run build`. |
+| Going live | **Not possible from this environment**: there are no Cloudflare credentials here and I do not hold accounts for the owner. Everything else is ready: `npm run build` produces `dist/`, `public/_headers` sets caching, and `.github/workflows/deploy-site.yml` deploys it once `CLOUDFLARE_API_TOKEN` and `CLOUDFLARE_ACCOUNT_ID` secrets exist (or connect the repo in Cloudflare Pages: root `site`, build `npm run build`, output `dist`). | — |
+| Private preview | Published as a private artifact: https://claude.ai/artifact/LnC8Aeg89v8Jq8NS55GJAp (same build, relative paths). | Republish from `site/` after any change. |

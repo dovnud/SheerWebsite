@@ -1,6 +1,6 @@
 # Sheer Davidai — site
 
-Single-page, WebGL-driven personal site. Plan, decisions and the facts audit: `../ADAPTATION_PLAN.md`. Reference teardown: `../TECH_TEARDOWN.md`.
+Single-page, WebGL-driven personal site (three.js, GSAP, Lenis, custom physics; about 215 KB of JavaScript gzipped). Plan, decisions and the facts audit: `../ADAPTATION_PLAN.md`. Reference teardown: `../TECH_TEARDOWN.md`.
 
 ```
 npm install

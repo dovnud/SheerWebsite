@@ -87,7 +87,7 @@ async function boot() {
 
   runGate(tasks, {
     reduced, audio,
-    onEnter: () => { world?.introHero(); const ric = (window as unknown as { requestIdleCallback?: (f: () => void, o?: { timeout: number }) => void }).requestIdleCallback; const startPhysics = () => { void world?.initPhysics(); }; if (ric) ric(startPhysics, { timeout: 1500 }); else setTimeout(startPhysics, 800); if (lenis) lenis.start(); else root.style.overflow = ''; ScrollTrigger.refresh(); },
+    onEnter: () => { world?.introHero(); if (lenis) lenis.start(); else root.style.overflow = ''; ScrollTrigger.refresh(); },
   });
   (window as unknown as { __replica: unknown }).__replica = { world, lenis };
 }
