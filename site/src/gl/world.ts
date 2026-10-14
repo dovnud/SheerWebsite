@@ -1,7 +1,8 @@
 import * as THREE from 'three';
 import { gsap } from 'gsap';
 import { RoomEnvironment } from 'three/examples/jsm/environments/RoomEnvironment.js';
-import { haloGeometry, ringGeometry, asteriskGeometry, orbGeometry } from './shapes';
+import { ringGeometry, asteriskGeometry, orbGeometry } from './shapes';
+import { buildHeroObject, HERO_VARIANTS, type HeroObject, type HeroVariant } from './hero-objects';
 import { FooterPhysics } from './footer';
 import { clamp } from '../util';
 
@@ -32,7 +33,7 @@ export class World {
   readonly camera = new THREE.PerspectiveCamera(30, 1, 10, 6000);
   private vw = 1; private vh = 1; private dpr = 1;
   private bg: THREE.Mesh; private bgU: Record<string, THREE.IUniform>;
-  private hero = new THREE.Group(); private plane!: THREE.Mesh; private chevron!: THREE.Mesh;
+  private hero = new THREE.Group(); private plane!: THREE.Mesh; private chevron!: THREE.Object3D; private heroObj!: HeroObject;
   private svc = new THREE.Group(); private svcObjs: THREE.Mesh[] = []; private svcTarget = [1, 0, 0]; private svcScale = [0, 0, 0];
   readonly footer = new FooterPhysics();
   private heroEl = document.querySelector<HTMLElement>('[data-hero]')!;
@@ -66,10 +67,13 @@ export class World {
     // hero: headline drawn to a texture (so the glass can refract it) + procedural glass chevron
     this.plane = new THREE.Mesh(new THREE.PlaneGeometry(1, 1), new THREE.MeshBasicMaterial({ transparent: false, alphaTest: 0.4, toneMapped: false }));
     this.hero.add(this.plane);
-    this.chevron = new THREE.Mesh(haloGeometry(), new THREE.MeshPhysicalMaterial({
+    const glass = new THREE.MeshPhysicalMaterial({
       color: 0xfff3ea, transmission: 1, thickness: 0.8, ior: 1.45, roughness: 0.12, metalness: 0,
       attenuationColor: new THREE.Color(0xffffff), attenuationDistance: Infinity, clearcoat: 0.7, clearcoatRoughness: 0.06, envMapIntensity: 0.75, specularIntensity: 0.9,
-    }));
+    });
+    const asked = (new URLSearchParams(location.search).get('obj') || location.hash.replace('#', '')) as HeroVariant;
+    this.heroObj = buildHeroObject(HERO_VARIANTS.includes(asked) ? asked : 'halo', glass);
+    this.chevron = this.heroObj.obj;
     this.chevron.position.z = 70; this.hero.add(this.chevron);
 
     // services: three abstract objects, one per chapter, shown only while that chapter has no real show media
@@ -111,7 +115,7 @@ export class World {
     const sz = new THREE.Vector2(); this.renderer.getDrawingBufferSize(sz); (this.bgU.uRes.value as THREE.Vector2).copy(sz);
     if (this.plane) {
       this.plane.scale.set(this.vw, this.vh, 1); this.drawHeadline();
-      this.chevron.scale.setScalar(this.chevronBase());
+      this.chevron.scale.setScalar(this.chevronBase() * this.heroObj.size);
     }
     this.footer.layout(this.vw, Math.max(this.footerEl.offsetHeight, this.vh));
     this.dirty = true;
@@ -150,10 +154,10 @@ export class World {
     this.hero.visible = hr.bottom > -vh * 0.25 && this.intro.t > 0.001;
     const k = this.intro.t;
     const idle = o.reduced ? 0 : 1;
-    this.chevron.rotation.set(0.9 + this.pointer.sy * -0.35 * idle + Math.sin(t * 0.31) * 0.12 * idle + (1 - k) * 2.6, this.pointer.sx * 0.5 * idle + Math.sin(t * 0.23) * 0.18 * idle, t * 0.12 * idle);
+    this.heroObj.pose(this.chevron, t, this.pointer.sx * idle, this.pointer.sy * idle, k, idle);
     this.chevron.position.y = Math.sin(t * 0.6) * 14 * idle;
     this.chevron.visible = k > 0.01;
-    this.chevron.scale.setScalar(this.chevronBase() * (0.2 + 0.8 * k));
+    this.chevron.scale.setScalar(this.chevronBase() * this.heroObj.size * (0.2 + 0.8 * k));
     (this.plane.material as THREE.MeshBasicMaterial).opacity = 1;
 
     // services anchored to the pinned frame
