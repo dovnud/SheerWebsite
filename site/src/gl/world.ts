@@ -73,7 +73,7 @@ export class World {
     this.chevron.position.z = 70; this.hero.add(this.chevron);
 
     // services: three abstract objects, one per chapter, shown only while that chapter has no real show media
-    const dark = new THREE.MeshStandardMaterial({ color: 0x0c0c0c, roughness: 0.22, metalness: 0.15, envMapIntensity: 1.1 });
+    const dark = new THREE.MeshStandardMaterial({ color: 0x0c0c0c, roughness: 0.34, metalness: 0.1, envMapIntensity: 0.8 });
     [ringGeometry(), asteriskGeometry(), orbGeometry()].forEach((g) => { const m = new THREE.Mesh(g, dark); m.scale.setScalar(0.0001); this.svc.add(m); this.svcObjs.push(m); });
 
     this.resize();

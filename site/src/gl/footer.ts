@@ -18,7 +18,7 @@ export class FooterPhysics {
   async init(vw: number, fh: number) {
     this.vw = vw;
     const geos = [ringGeometry(), plusGeometry(), asteriskGeometry(), haloGeometry(), ringGeometry(), plusGeometry()];
-    const mat = new THREE.MeshStandardMaterial({ color: 0x0b0b0b, roughness: 0.26, metalness: 0.18, envMapIntensity: 1.0 });
+    const mat = new THREE.MeshStandardMaterial({ color: 0x0b0b0b, roughness: 0.34, metalness: 0.12, envMapIntensity: 0.8 });
     mat.clippingPlanes = [this.clip];
     const u = Math.min(64, Math.max(26, vw * 0.042));
     const N = vw < 768 ? 16 : 26;
