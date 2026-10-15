@@ -49,6 +49,7 @@ async function boot() {
       const { World } = await import('./gl/world');
       world = new World({ canvas: qs<HTMLCanvasElement>('#gl')!, reduced, heroLines: ['SHEER', 'DAVIDAI'], theme: palette });
       world.onKick = () => audio.tick(0.035, 1800);
+      world.onLiquidStart = () => audio.pour();
       const w = world;
       tasks.push(document.fonts.ready.then(() => w.init()));
     } catch (e) { console.warn('WebGL world failed; falling back to DOM only', e); (root.classList.remove('has-gl'), root.classList.add('no-gl')); world = null; }
@@ -85,6 +86,7 @@ async function boot() {
   // pointer + frame loop
   addEventListener('pointermove', (e) => world?.setPointer(e.clientX, e.clientY), { passive: true });
   addEventListener('scroll', () => world?.onScroll(scrollY), { passive: true });
+  let moodRaf = 0; addEventListener('scroll', () => { if (moodRaf) return; moodRaf = requestAnimationFrame(() => { moodRaf = 0; audio.setMood(scrollY / Math.max(1, document.documentElement.scrollHeight - innerHeight)); }); }, { passive: true });
   addEventListener('resize', () => { world?.resize(); ScrollTrigger.refresh(); });
   gsap.ticker.add((time) => { world?.update(time); trailTick?.(performance.now()); grainTick?.(); });
 
@@ -92,7 +94,7 @@ async function boot() {
     reduced, audio,
     onEnter: () => { world?.introHero(); if (lenis) lenis.start(); else root.style.overflow = ''; ScrollTrigger.refresh(); },
   });
-  (window as unknown as { __replica: unknown }).__replica = { world, lenis };
+  (window as unknown as { __replica: unknown }).__replica = { world, lenis, audio };
 }
 
 boot().catch((e) => {

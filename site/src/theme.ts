@@ -1,4 +1,4 @@
-/** Colour themes. Orange is the shipped look. Pick another with ?theme=velvet|marquee|cobalt (or #velvet etc.). */
+/** Colour themes. Velvet is the shipped look. Pick another with ?theme=orange|marquee|cobalt (or #orange etc.). */
 export type RGB = [number, number, number];
 export interface Theme {
   name: string;
@@ -42,7 +42,7 @@ export function urlTokens(): string[] {
 }
 export function currentTheme(): Theme {
   const t = urlTokens().find((k) => k in THEMES);
-  return THEMES[t ?? 'orange'];
+  return THEMES[t ?? 'velvet'];
 }
 
 /** Push the theme into CSS custom properties and the browser UI colour. */

@@ -4,21 +4,21 @@
 :root {
   --orange: #ff4c00;
   --orange-deep: #fa3300;
-  --ink: #000;
-  --paper: #fff;
-  --paper-ink: #000;
-  --bg: #ff4c00;
-  --accent: #ff4c00;
-  --hover: #ff4c00;
-  --cursor: #ff4c00;
-  --wipe: #ff4c00;
+  --ink: #F5EADB;
+  --paper: #F5EADB;
+  --paper-ink: #1B0A0E;
+  --bg: #6b0a1a;
+  --accent: #8E1226;
+  --hover: #F2CC8F;
+  --cursor: #F2CC8F;
+  --wipe: #6b0a1a;
   --pad: 10px;
   --gap: 10px;
   --cols: 6;
   --serif: 'Bodoni Moda', 'Times New Roman', serif;
   --sans: 'Instrument Sans', system-ui, sans-serif;
   --ease-out: cubic-bezier(0, 0, 0.2, 1);
-  --header-ink: #fff;
+  --header-ink: #F5EADB;
 }
 @media (min-width: 768px) {
   :root { --pad: 22px; --cols: 5; }

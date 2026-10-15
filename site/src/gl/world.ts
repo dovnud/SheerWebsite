@@ -45,7 +45,7 @@ export class World {
   private pointer = { x: 0, y: 0, sx: 0, sy: 0, px: -999, py: -999 };
   private intro = { t: 0 };
   /** liquid exit: the glass SD hands off to a screen-space liquid on first scroll, which drains away for good */
-  private liquid?: LiquidPass; liquidState: 'rest' | 'running' | 'gone' = 'rest'; private liquidTl?: gsap.core.Tween;
+  private liquid?: LiquidPass; onLiquidStart?: () => void; liquidState: 'rest' | 'running' | 'gone' = 'rest'; private liquidTl?: gsap.core.Tween;
   private heroTex?: THREE.CanvasTexture;
   private lastScroll = -1; private dirty = true;
   ready = false;
@@ -148,7 +148,7 @@ export class World {
   onScroll(y: number) {
     if (!this.ready || this.liquidState !== 'rest' || this.intro.t < 0.95 || y <= 2 || y > this.vh * 0.7) return;
     if (this.o.reduced || !this.liquid) { this.liquidState = 'gone'; this.dirty = true; return; }   // reduced motion: it simply goes
-    this.liquidState = 'running'; this.liquid.P.value = 0;
+    this.liquidState = 'running'; this.liquid.P.value = 0; this.onLiquidStart?.();
     this.liquidTl = gsap.to(this.liquid.P, { value: 1, duration: 3.8, ease: 'power1.in', onUpdate: () => { this.dirty = true; }, onComplete: () => { this.liquidState = 'gone'; this.dirty = true; } });
   }
 
