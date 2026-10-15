@@ -97,7 +97,7 @@ export class World {
   private chevronBase() { return this.vw < 768 ? 0.24 * this.vw : Math.min(0.185 * this.vh, 0.12 * this.vw); }
 
   private drawHeadline() {
-    const lines = this.o.heroLines, vw = this.vw, vh = this.vh, d = Math.min(this.dpr, 2);
+    const lines = this.o.heroLines, vw = this.vw, vh = this.vh, d = Math.min(Math.max(this.dpr, 2), 3);   // always at least 2x so letter edges stay smooth on 1x screens
     const c = document.createElement('canvas'); c.width = Math.round(vw * d); c.height = Math.round(vh * d);
     const ctx = c.getContext('2d')!; ctx.scale(d, d);
     const fam = '"Bodoni Moda", serif'; ctx.font = `400 100px ${fam}`;
@@ -110,7 +110,7 @@ export class World {
     lines.forEach((l, i) => ctx.fillText(l, 0, y0 + i * lh));
     ctx.restore();
     this.heroTex?.dispose();
-    this.heroTex = new THREE.CanvasTexture(c); this.heroTex.colorSpace = THREE.SRGBColorSpace; this.heroTex.generateMipmaps = false; this.heroTex.minFilter = THREE.LinearFilter;
+    this.heroTex = new THREE.CanvasTexture(c); this.heroTex.colorSpace = THREE.SRGBColorSpace; this.heroTex.generateMipmaps = true; this.heroTex.minFilter = THREE.LinearMipmapLinearFilter; this.heroTex.anisotropy = 4;
     const m = this.plane.material as THREE.MeshBasicMaterial; m.map = this.heroTex; m.needsUpdate = true;
   }
 
