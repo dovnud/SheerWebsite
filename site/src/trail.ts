@@ -2,12 +2,13 @@ import { finePointer } from './util';
 
 /** Two stacked 2D canvases draw the same pointer trail: white over orange/black, orange over the white panels
     (the orange one is clipped to the white zone's rectangle each frame). Plus a small dot-in-ring cursor. */
-export function initTrail(): ((t: number) => void) | null {
+import type { Theme } from './theme';
+export function initTrail(theme: Theme): ((t: number) => void) | null {
   if (!finePointer()) return null;
   const cw = document.getElementById('trail-white') as HTMLCanvasElement, co = document.getElementById('trail-orange') as HTMLCanvasElement;
   const cur = document.getElementById('cursor') as HTMLElement, zones = Array.from(document.querySelectorAll<HTMLElement>('.white-zone'));
   const ctxs = [cw.getContext('2d')!, co.getContext('2d')!];
-  const colors = ['#ffffff', '#ff4c00'];
+  const colors = [theme.trailGL, theme.accent];
   let dpr = Math.min(devicePixelRatio || 1, 2);
   const size = () => { dpr = Math.min(devicePixelRatio || 1, 2); [cw, co].forEach((c) => { c.width = innerWidth * dpr; c.height = innerHeight * dpr; }); };
   size(); addEventListener('resize', size);

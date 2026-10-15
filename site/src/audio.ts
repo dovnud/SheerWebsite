@@ -1,5 +1,8 @@
 import { store } from './util';
 
+/** The low drone bed was judged too dramatic and unrelated to her world; it is off until a related sound design is chosen. */
+const AMBIENT_BED = false;
+
 /** Synthesised sound: no audio files are shipped. Starts only from a user gesture. */
 export class AudioEngine {
   private ctx?: AudioContext;
@@ -18,7 +21,7 @@ export class AudioEngine {
     this.master.gain.value = 0;
     this.master.connect(this.ctx.destination);
     this.noiseBuf = this.makeNoise();
-    this.ambient();
+    if (AMBIENT_BED) this.ambient();
     this.started = true;
     try { await this.ctx.resume(); } catch { /* ignore */ }
     this.apply();

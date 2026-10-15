@@ -17,10 +17,12 @@ import { initContact } from './contact';
 import { createMedia } from './media';
 import { runGate } from './gate';
 import type { World } from './gl/world';
+import { currentTheme, applyTheme } from './theme';
 
 const root = document.documentElement;
 root.classList.remove('no-js'); root.classList.add('js');
 const reduced = reducedMotion();
+const palette = currentTheme(); applyTheme(palette);
 const audio = new AudioEngine();
 gsap.registerPlugin(ScrollTrigger);
 
@@ -45,7 +47,7 @@ async function boot() {
   if (useGL) {
     try {
       const { World } = await import('./gl/world');
-      world = new World({ canvas: qs<HTMLCanvasElement>('#gl')!, reduced, heroLines: ['SHEER', 'DAVIDAI'] });
+      world = new World({ canvas: qs<HTMLCanvasElement>('#gl')!, reduced, heroLines: ['SHEER', 'DAVIDAI'], theme: palette });
       world.onKick = () => audio.tick(0.035, 1800);
       const w = world;
       tasks.push(document.fonts.ready.then(() => w.init()));
@@ -53,8 +55,8 @@ async function boot() {
   }
 
   const grainTick = initGrain(qs<HTMLCanvasElement>('#grain')!, !reduced);
-  const trailTick = reduced ? null : initTrail();
-  initReveals(); initScratch(reduced);
+  const trailTick = reduced ? null : initTrail(palette);
+  initReveals(); initScratch(reduced, palette);
   const media = createMedia(world, reduced);
   initServices({ reduced, lenis, world, audio, media: () => media });
   void media.load();

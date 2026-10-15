@@ -3,22 +3,23 @@ import { gsap } from 'gsap';
 import { RoomEnvironment } from 'three/examples/jsm/environments/RoomEnvironment.js';
 import { ringGeometry, asteriskGeometry, orbGeometry } from './shapes';
 import { LiquidPass } from './liquid';
+import { type Theme, urlTokens } from '../theme';
 import { buildHeroObject, HERO_VARIANTS, type HeroObject, type HeroVariant } from './hero-objects';
 import { FooterPhysics } from './footer';
 import { clamp } from '../util';
 
 const BG_VERT = 'void main(){gl_Position=vec4(position.xy,0.,1.);}';
 const BG_FRAG = /* glsl */ `
-uniform float uTime; uniform vec2 uRes; uniform vec2 uMouse; uniform float uEdge;
+uniform float uTime; uniform vec2 uRes; uniform vec2 uMouse; uniform float uEdge; uniform vec3 uA; uniform vec3 uB; uniform vec3 uC; uniform vec3 uGlow;
 float h(vec2 p){return fract(sin(dot(p,vec2(127.1,311.7)))*43758.5453);}
 float n(vec2 p){vec2 i=floor(p),f=fract(p);vec2 u=f*f*(3.-2.*f);return mix(mix(h(i),h(i+vec2(1,0)),u.x),mix(h(i+vec2(0,1)),h(i+vec2(1,1)),u.x),u.y);}
 float fbm(vec2 p){float v=0.,a=.5;for(int i=0;i<4;i++){v+=a*n(p);p*=2.;a*=.5;}return v;}
 void main(){
   vec2 uv=gl_FragCoord.xy/uRes; float t=uTime*.045; float asp=uRes.x/uRes.y;
   float f=fbm(uv*vec2(1.5,1.2)+vec2(t,-t*.7)); float g=smoothstep(.25,.8,f);
-  vec3 a=vec3(1.,.298,0.), b=vec3(.98,.19,0.), c=vec3(1.,.36,.02);
+  vec3 a=uA, b=uB, c=uC;
   vec3 col=mix(mix(a,b,g),c,smoothstep(.5,.95,n(uv*3.+t))*.35);
-  float d=distance(uv*vec2(asp,1.),uMouse*vec2(asp,1.)); col+=vec3(.06,.035,0.)*smoothstep(.55,0.,d);
+  float d=distance(uv*vec2(asp,1.),uMouse*vec2(asp,1.)); col+=uGlow*smoothstep(.55,0.,d);
   float y=uRes.y-gl_FragCoord.y;               /* px from the top of the canvas */
   col=mix(col,vec3(0.),step(uEdge,y));         /* hard black edge tracks the footer's top */
   col=pow(col,vec3(2.2));                      /* author in sRGB, hand linear to three's output stage */
@@ -26,7 +27,7 @@ void main(){
   #include <colorspace_fragment>
 }`;
 
-export interface WorldOpts { canvas: HTMLCanvasElement; reduced: boolean; heroLines: string[] }
+export interface WorldOpts { canvas: HTMLCanvasElement; reduced: boolean; heroLines: string[]; theme: Theme }
 
 export class World {
   readonly renderer: THREE.WebGLRenderer;
@@ -51,11 +52,12 @@ export class World {
 
   constructor(private o: WorldOpts) {
     this.renderer = new THREE.WebGLRenderer({ canvas: o.canvas, antialias: true, alpha: false, powerPreference: 'high-performance' });
-    this.renderer.setClearColor(0xff4c00, 1);
+    this.renderer.setClearColor(o.theme.clear, 1);
     this.renderer.localClippingEnabled = true;
     (this.renderer as unknown as { transmissionResolutionScale: number }).transmissionResolutionScale = innerWidth < 768 ? 0.5 : 1;
 
-    this.bgU = { uTime: { value: 0 }, uRes: { value: new THREE.Vector2(1, 1) }, uMouse: { value: new THREE.Vector2(0.5, 0.5) }, uEdge: { value: 1e6 } };
+    const th = o.theme; const v3 = (c: number[]) => new THREE.Vector3(c[0], c[1], c[2]);
+    this.bgU = { uA: { value: v3(th.bgA) }, uB: { value: v3(th.bgB) }, uC: { value: v3(th.bgC) }, uGlow: { value: v3(th.glow) }, uTime: { value: 0 }, uRes: { value: new THREE.Vector2(1, 1) }, uMouse: { value: new THREE.Vector2(0.5, 0.5) }, uEdge: { value: 1e6 } };
     this.bg = new THREE.Mesh(new THREE.PlaneGeometry(2, 2), new THREE.ShaderMaterial({ vertexShader: BG_VERT, fragmentShader: BG_FRAG, uniforms: this.bgU, depthTest: false, depthWrite: false }));
     this.bg.frustumCulled = false; this.bg.renderOrder = -10; this.scene.add(this.bg);
     this.scene.add(this.hero, this.svc, this.footer.group);
@@ -74,16 +76,16 @@ export class World {
       color: 0xfff3ea, transmission: 1, thickness: 0.8, ior: 1.45, roughness: 0.12, metalness: 0,
       attenuationColor: new THREE.Color(0xffffff), attenuationDistance: Infinity, clearcoat: 0.7, clearcoatRoughness: 0.06, envMapIntensity: 0.75, specularIntensity: 0.9,
     });
-    const asked = (new URLSearchParams(location.search).get('obj') || location.hash.replace('#', '')) as HeroVariant;
-    this.heroObj = buildHeroObject(HERO_VARIANTS.includes(asked) ? asked : 'sd', glass);
+    const asked = urlTokens().find((k) => (HERO_VARIANTS as string[]).includes(k)) as HeroVariant | undefined;
+    this.heroObj = buildHeroObject(asked ?? 'sd', glass);
     this.chevron = this.heroObj.obj;
     this.chevron.position.z = 70; this.hero.add(this.chevron);
 
     // services: three abstract objects, one per chapter, shown only while that chapter has no real show media
-    const dark = new THREE.MeshStandardMaterial({ color: 0x0c0c0c, roughness: 0.34, metalness: 0.1, envMapIntensity: 0.8 });
+    const dark = new THREE.MeshStandardMaterial({ color: this.o.theme.svcObj, roughness: 0.34, metalness: 0.1, envMapIntensity: 0.8 });
     [ringGeometry(), asteriskGeometry(), orbGeometry()].forEach((g) => { const m = new THREE.Mesh(g, dark); m.scale.setScalar(0.0001); this.svc.add(m); this.svcObjs.push(m); });
 
-    this.liquid = new LiquidPass(this.vw, this.vh, this.dpr); this.syncLiquid();
+    this.liquid = new LiquidPass(this.vw, this.vh, this.dpr, this.o.theme); this.syncLiquid();
     this.resize();
     this.footer.onKick = () => this.onKick?.();
     await this.footer.init(this.vw, Math.max(this.footerEl.offsetHeight, this.vh));
@@ -102,7 +104,7 @@ export class World {
     const sx = vw < 768 ? 0.78 : 1;                    // on a phone the name is condensed so it can be set larger
     const widest = Math.max(...lines.map((l) => ctx.measureText(l).width)) * sx;
     const fs = Math.min((vw * (vw < 768 ? 0.92 : 0.82)) / widest * 100, (vh * 0.74) / (lines.length * 0.92));
-    ctx.font = `400 ${fs}px ${fam}`; ctx.fillStyle = '#000'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.font = `400 ${fs}px ${fam}`; ctx.fillStyle = this.o.theme.ink; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
     const lh = fs * 0.92, y0 = vh / 2 - (lines.length - 1) * lh / 2 + fs * 0.03;
     ctx.save(); ctx.translate(vw / 2, 0); ctx.scale(sx, 1);
     lines.forEach((l, i) => ctx.fillText(l, 0, y0 + i * lh));

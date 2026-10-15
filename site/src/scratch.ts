@@ -2,7 +2,8 @@ import { gsap } from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 
 /** "Scratch around": pointer strokes reveal WORKSHOP / READING / REVISION through a mask canvas. */
-export function initScratch(reduced: boolean) {
+import type { Theme } from './theme';
+export function initScratch(reduced: boolean, theme: Theme) {
   const sec = document.getElementById('scratch') as HTMLElement, cv = document.getElementById('scratch-canvas') as HTMLCanvasElement;
   const ctx = cv.getContext('2d')!; const mask = document.createElement('canvas'), mctx = mask.getContext('2d')!;
   let w = 0, h = 0, dpr = 1, logo: HTMLCanvasElement | null = null, last: { x: number; y: number } | null = null, queued = false;
@@ -12,7 +13,7 @@ export function initScratch(reduced: boolean) {
     [cv, mask].forEach((c) => { c.width = w * dpr; c.height = h * dpr; });
     logo = document.createElement('canvas'); logo.width = w * dpr; logo.height = h * dpr;
     const l = logo.getContext('2d')!; l.scale(dpr, dpr);
-    const words = ['WORKSHOP', 'READING', 'REVISION']; l.fillStyle = '#ff4c00'; l.textAlign = w < 768 ? 'center' : 'left'; l.textBaseline = 'middle';
+    const words = ['WORKSHOP', 'READING', 'REVISION']; l.fillStyle = theme.accent; l.textAlign = w < 768 ? 'center' : 'left'; l.textBaseline = 'middle';
     l.font = '400 100px "Bodoni Moda", serif'; const widest = Math.max(...words.map((x) => l.measureText(x).width));
     const fs = Math.min((w * (w < 768 ? 0.86 : 0.58)) / widest * 100, (h * 0.62) / (words.length * 0.92));
     l.font = `400 ${fs}px "Bodoni Moda", serif`; const lh = fs * 0.92, y0 = h * (w < 768 ? 0.4 : 0.5) - (words.length - 1) * lh / 2;

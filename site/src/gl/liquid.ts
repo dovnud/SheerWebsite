@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import type { Theme } from '../theme';
 import { MONOGRAM, MONOGRAM_HEIGHT, MONOGRAM_WIDTH } from './monogram-paths';
 
 /** Screen-space liquid. The glass SD hands off to this layer, which spreads the film across the screen, pulls it into
@@ -16,6 +17,9 @@ uniform vec2 uRes;
 uniform float uTime;
 uniform float uP;
 uniform float uAspect;
+uniform vec3 uTint;
+uniform vec3 uEnvLo;
+uniform vec3 uEnvHi;
 varying vec2 vUv;
 
 float hash(float n){ return fract(sin(n * 127.1) * 43758.5453); }
@@ -59,9 +63,9 @@ void main(){
     vec3 n = normalize(vec3(-vec2(fx - fl, fu - fd) * 2.4, 1.0));
     float h = smoothstep(thr, thr + 0.6, f);
     vec3 refr = texture2D(tScene, uv + n.xy * 0.07 * (0.5 + h)).rgb;
-    vec3 body = refr * vec3(0.99, 0.88, 0.80) + vec3(0.04, 0.03, 0.02);            // warm, slightly smoky glass
+    vec3 body = refr * uTint + vec3(0.04, 0.03, 0.02);            // warm, slightly smoky glass
     vec3 r = reflect(vec3(0., 0., -1.), n);
-    vec3 env = mix(vec3(0.55, 0.20, 0.08), vec3(1.0, 0.82, 0.62), smoothstep(-0.3, 0.9, r.y));   // chrome-like sky and floor
+    vec3 env = mix(uEnvLo, uEnvHi, smoothstep(-0.3, 0.9, r.y));   // chrome-like sky and floor
     float fres = pow(1.0 - n.z, 2.2);
     vec3 L = normalize(vec3(-0.45, 0.6, 0.65));
     float spec = pow(max(dot(reflect(-L, n), vec3(0., 0., 1.)), 0.), 34.0);
@@ -83,11 +87,11 @@ export class LiquidPass {
   private cam = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
   private timeU = { value: 0 };
 
-  constructor(w: number, h: number, dpr: number) {
+  constructor(w: number, h: number, dpr: number, theme: Theme) {
     this.rt = new THREE.WebGLRenderTarget(Math.round(w * dpr), Math.round(h * dpr), { samples: 4, type: THREE.HalfFloatType });
     this.mat = new THREE.ShaderMaterial({
       vertexShader: VERT, fragmentShader: FRAG, depthTest: false, depthWrite: false,
-      uniforms: { tScene: { value: this.rt.texture }, tMask: { value: this.maskTex }, uRes: { value: new THREE.Vector2(w * dpr, h * dpr) }, uTime: this.timeU, uP: this.P, uAspect: { value: w / h } },
+      uniforms: { tScene: { value: this.rt.texture }, tMask: { value: this.maskTex }, uRes: { value: new THREE.Vector2(w * dpr, h * dpr) }, uTime: this.timeU, uP: this.P, uAspect: { value: w / h }, uTint: { value: new THREE.Vector3(...theme.tint) }, uEnvLo: { value: new THREE.Vector3(...theme.envLo) }, uEnvHi: { value: new THREE.Vector3(...theme.envHi) } },
     });
     this.quad = new THREE.Mesh(new THREE.PlaneGeometry(2, 2), this.mat); this.quad.frustumCulled = false; this.scene.add(this.quad);
     this.maskTex.minFilter = THREE.LinearMipmapLinearFilter; this.maskTex.generateMipmaps = true; this.maskTex.wrapS = this.maskTex.wrapT = THREE.ClampToEdgeWrapping;
