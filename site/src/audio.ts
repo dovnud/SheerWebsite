@@ -11,7 +11,9 @@ export class AudioEngine {
   private verbSend?: GainNode;
   private murmurBus?: GainNode;
   private humG?: GainNode;
-  on = store('replica.sound') !== 'off';
+  /** Master kill switch: sound is parked until a design is chosen that suits the work. */
+  private static readonly ENABLED = false;
+  on = AudioEngine.ENABLED && store('replica.sound') !== 'off';
   started = false;
   private lastTick = 0;
   private timers: number[] = [];
@@ -20,7 +22,7 @@ export class AudioEngine {
   private static readonly LEVEL = 2.0;
 
   async start() {
-    if (this.started) return;
+    if (!AudioEngine.ENABLED || this.started) return;
     const AC = window.AudioContext || (window as unknown as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
     if (!AC) return;
     const ctx = new AC();
