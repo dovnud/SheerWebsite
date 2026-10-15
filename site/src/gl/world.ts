@@ -4,6 +4,7 @@ import { RoomEnvironment } from 'three/examples/jsm/environments/RoomEnvironment
 import { ringGeometry, asteriskGeometry, orbGeometry } from './shapes';
 import { LiquidPass } from './liquid';
 import { type Theme, urlTokens } from '../theme';
+import { Projection } from './projection';
 import { buildHeroObject, HERO_VARIANTS, type HeroObject, type HeroVariant } from './hero-objects';
 import { FooterPhysics } from './footer';
 import { clamp } from '../util';
@@ -47,6 +48,7 @@ export class World {
   /** liquid exit: the glass SD hands off to a screen-space liquid on first scroll, which drains away for good */
   private liquid?: LiquidPass; onLiquidStart?: () => void; liquidState: 'rest' | 'running' | 'gone' = 'rest'; private liquidTl?: gsap.core.Tween;
   private heroTex?: THREE.CanvasTexture;
+  private projection?: Projection;
   private lastScroll = -1; private dirty = true;
   ready = false;
 
@@ -80,6 +82,7 @@ export class World {
     this.heroObj = buildHeroObject(asked ?? 'sd', glass);
     this.chevron = this.heroObj.obj;
     this.chevron.position.z = 70; this.hero.add(this.chevron);
+    if (this.heroObj.obj instanceof THREE.Mesh && (asked ?? 'sd') === 'sd') { this.projection = new Projection(this.heroObj.obj, this.o.reduced); this.chevron.add(this.projection.mesh); }
 
     // services: three abstract objects, one per chapter, shown only while that chapter has no real show media
     const dark = new THREE.MeshStandardMaterial({ color: this.o.theme.svcObj, roughness: 0.34, metalness: 0.1, envMapIntensity: 0.8 });
@@ -133,6 +136,8 @@ export class World {
     this.pointer.x = (cx / this.vw) * 2 - 1; this.pointer.y = -((cy / this.vh) * 2 - 1); this.pointer.px = cx; this.pointer.py = cy; this.dirty = true;
   }
   private hasMedia = [false, false, false]; private step = 0;
+  /** Optional film for the SD glass (manifest key "hero"). */
+  setHeroVideo(src: string, poster?: string) { this.projection?.setVideo(src, poster); }
   setHasMedia(i: number, v: boolean) { this.hasMedia[i] = v; this.setStep(this.step); }
   /** the abstract object stands in for a chapter only while that chapter has no real show media */
   setStep(i: number) { this.step = i; this.svcTarget = [0, 0, 0].map((_, k) => (k === i && !this.hasMedia[k] ? 1 : 0)); this.dirty = true; }
@@ -176,6 +181,7 @@ export class World {
     this.chevron.position.y = bob;
     this.chevron.scale.setScalar(s);
     this.chevron.visible = k > 0.01 && this.liquidState === 'rest';
+    if (this.chevron.visible) this.projection?.update(t);
     (this.plane.material as THREE.MeshBasicMaterial).opacity = 1;
 
     // services anchored to the pinned frame
