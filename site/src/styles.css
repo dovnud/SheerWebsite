@@ -158,7 +158,16 @@ main { position: relative; z-index: 1; }
 .no-gl .sr-hero, html:not(.js) .sr-hero { position: static; width: auto; height: auto; clip: auto; white-space: normal; margin: 90px var(--pad) 0; font-family: var(--serif); font-size: clamp(60px, 14vw, 200px); line-height: 0.9; text-transform: uppercase; }
 .no-gl .hero { min-height: 40svh; }
 
-.sub { min-height: 100svh; align-items: end; padding-bottom: 14vh; }
+.sub { min-height: 100svh; align-items: end; padding-bottom: 14vh; position: relative; overflow-x: clip; }
+.sub .tw { position: relative; z-index: 2; }
+/* background film: centred, soft-edged, never interactive */
+.bgvid { position: absolute; left: 50%; top: 46%; width: min(64vw, 1180px); aspect-ratio: 16 / 9; transform: translate(-50%, -50%); z-index: 0; pointer-events: none; user-select: none; overflow: hidden;
+  -webkit-mask-image: radial-gradient(ellipse closest-side at 50% 50%, #000 82%, transparent 100%); mask-image: radial-gradient(ellipse closest-side at 50% 50%, #000 82%, transparent 100%); }
+.bgvid video, .bgvid canvas { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; opacity: .82; }
+.bgvid video { opacity: 0; transition: opacity 1.2s var(--ease-out); } .bgvid.live video { opacity: .82; }
+.bgvid video::-webkit-media-controls { display: none !important; }
+@media (max-width: 767px) { .bgvid { width: 116vw; top: 40%; } }
+html:not(.js) .bgvid { display: none; }
 .sub .tw, .scratch-copy .tw, .closing .tw { grid-column: 1 / -1; }
 @media (min-width: 768px) {
   .sub .tw, .scratch-copy .tw, .closing .tw { grid-column: 4 / 6; }

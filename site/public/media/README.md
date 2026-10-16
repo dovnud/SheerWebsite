@@ -25,3 +25,9 @@ Key `"hero"` in `manifest.json` plays inside the 3D SD monogram, projected on it
 glass, bevels and refraction stay visible. Use a **relative** path: `"hero": { "src": "media/hero.mp4", "poster": "media/hero.jpg" }`.
 Until a file exists, an abstract placeholder (moving stage beams and curtain folds, no people) plays instead.
 Best footage: dark or low-key, high contrast, slow movement, 6–12 s seamless loop, landscape, under ~5 MB, muted. Bright, flat footage washes out the glass.
+
+## Background film (section after the hero)
+
+Key `"backdrop"` plays behind the "Producing Artistic Director…" text: muted, looped, no controls, not clickable, paused when off screen
+and held on a still frame under reduced motion. `"backdrop": { "src": "media/backdrop.mp4", "poster": "media/backdrop.jpg" }` (relative paths).
+Until then a slow abstract light animation stands in. Best: dark, slow, 10–20 s seamless loop, 16:9, under ~6 MB, no audio track.

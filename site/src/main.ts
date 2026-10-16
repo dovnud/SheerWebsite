@@ -15,6 +15,7 @@ import { initReveals } from './reveals';
 import { initServices } from './services';
 import { initContact } from './contact';
 import { createMedia } from './media';
+import { initBackdrop } from './backdrop';
 import { runGate } from './gate';
 import type { World } from './gl/world';
 import { currentTheme, applyTheme } from './theme';
@@ -58,6 +59,7 @@ async function boot() {
   const grainTick = initGrain(qs<HTMLCanvasElement>('#grain')!, !reduced);
   const trailTick = reduced ? null : initTrail(palette);
   initReveals(); initScratch(reduced, palette);
+  initBackdrop(reduced);
   const media = createMedia(world, reduced);
   initServices({ reduced, lenis, world, audio, media: () => media });
   void media.load();
