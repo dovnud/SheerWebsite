@@ -1,0 +1,364 @@
+<title>Mi Tutor de Español</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<style>
+  /* Layout: one-screen phone app. Header, scrolling view, bottom tab bar. Tutor view adds a composer above the tabs. */
+  :root {
+    --bg: #f2f5f7; --surface: #ffffff; --fg: #14232e; --muted: #5d6f7c; --line: #d9e1e7;
+    --accent: #1b4fd6; --accent-fg: #ffffff; --accent-soft: #e3eafc;
+    --me: #1b4fd6; --me-fg: #ffffff; --ok: #1f8a4c; --bad: #c2335f; --sun: #e9a800;
+    --display: "Bricolage Grotesque", "Avenir Next", system-ui, sans-serif;
+    --body: "Figtree", system-ui, -apple-system, "Segoe UI", sans-serif;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #0e171d; --surface: #17232b; --fg: #eaf0f4; --muted: #94a6b3; --line: #2a3a45;
+      --accent: #7ea1ff; --accent-fg: #0b1220; --accent-soft: #1f2e4d;
+      --me: #3e66e0; --me-fg: #ffffff; --ok: #4cc283; --bad: #ef7aa0; --sun: #f2c14b;
+      color-scheme: dark;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #0e171d; --surface: #17232b; --fg: #eaf0f4; --muted: #94a6b3; --line: #2a3a45;
+    --accent: #7ea1ff; --accent-fg: #0b1220; --accent-soft: #1f2e4d;
+    --me: #3e66e0; --me-fg: #ffffff; --ok: #4cc283; --bad: #ef7aa0; --sun: #f2c14b;
+    color-scheme: dark;
+  }
+  * { box-sizing: border-box; }
+  html, body { height: 100%; }
+  body {
+    background: var(--bg); color: var(--fg); font: 16px/1.5 var(--body);
+    padding-left: max(16px, env(safe-area-inset-left, 0px));
+    padding-right: max(16px, env(safe-area-inset-right, 0px));
+  }
+  #app { height: 100%; max-width: 640px; margin: 0 auto; display: flex; flex-direction: column; min-height: 0; }
+  header { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; padding: 10px 0 8px; }
+  h1 { font: 700 1.25rem/1.2 var(--display); margin: 0; letter-spacing: -0.01em; }
+  #status { font-size: .75rem; color: var(--muted); white-space: nowrap; }
+  main { flex: 1; min-height: 0; display: flex; flex-direction: column; }
+  .scroll { flex: 1; min-height: 0; overflow-y: auto; padding-bottom: 12px; }
+  button { font: inherit; color: inherit; cursor: pointer; border-radius: 12px; border: 1px solid var(--line); background: var(--surface); padding: 10px 14px; min-height: 44px; }
+  button:focus-visible, textarea:focus-visible, select:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+  button.primary { background: var(--accent); color: var(--accent-fg); border-color: var(--accent); font-weight: 600; }
+  button:disabled { opacity: .5; cursor: default; }
+  button.quiet { border-color: transparent; background: transparent; color: var(--muted); min-height: 36px; padding: 6px 10px; font-size: .85rem; }
+
+  /* tab bar */
+  nav { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; padding: 8px 0 max(8px, env(safe-area-inset-bottom, 0px)); border-top: 1px solid var(--line); }
+  nav button { border: none; background: transparent; font-weight: 600; color: var(--muted); }
+  nav button[aria-current="true"] { background: var(--accent-soft); color: var(--accent); }
+
+  /* tutor */
+  .msg { max-width: 88%; padding: 10px 14px; border-radius: 18px; margin: 8px 0; white-space: pre-wrap; overflow-wrap: anywhere; }
+  .msg.tutor { background: var(--surface); border: 1px solid var(--line); border-bottom-left-radius: 6px; }
+  .msg.me { background: var(--me); color: var(--me-fg); margin-left: auto; border-bottom-right-radius: 6px; }
+  .msg.note { max-width: 100%; background: none; color: var(--muted); font-size: .85rem; text-align: center; padding: 4px; }
+  .banner { background: var(--surface); border: 1px solid var(--line); border-radius: 16px; padding: 16px; margin: 8px 0; display: grid; gap: 10px; }
+  .banner h2 { font: 700 1.1rem/1.3 var(--display); margin: 0; text-wrap: balance; }
+  .banner p { margin: 0; color: var(--muted); }
+  .composer { display: flex; gap: 8px; align-items: flex-end; padding: 8px 0; }
+  .composer textarea { flex: 1; min-width: 0; font: inherit; color: var(--fg); background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 10px 12px; resize: none; max-height: 120px; }
+  .tools { display: flex; justify-content: space-between; align-items: center; gap: 8px; flex-wrap: wrap; }
+  .accents { display: flex; gap: 4px; flex-wrap: wrap; padding-bottom: 6px; }
+  .accents button { min-height: 36px; min-width: 36px; padding: 4px 8px; }
+
+  /* cards and quiz */
+  select { font: inherit; color: var(--fg); background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 10px; width: 100%; min-height: 44px; margin: 4px 0 12px; }
+  .bar { height: 6px; background: var(--line); border-radius: 99px; overflow: hidden; margin: 6px 0 12px; }
+  .bar > i { display: block; height: 100%; background: var(--accent); }
+  .card { background: var(--surface); border: 1px solid var(--line); border-radius: 18px; padding: 28px 18px; text-align: center; display: grid; gap: 10px; justify-items: center; }
+  .card .word { font: 700 2rem/1.2 var(--display); text-wrap: balance; overflow-wrap: anywhere; cursor: pointer; }
+  .hint { color: var(--muted); font-size: .85rem; }
+  .row { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; margin-top: 8px; }
+  .choices { display: grid; gap: 8px; width: 100%; margin-top: 8px; }
+  .choices button.right { background: var(--ok); border-color: var(--ok); color: #fff; }
+  .choices button.wrong { background: var(--bad); border-color: var(--bad); color: #fff; }
+  .stats { color: var(--muted); font-size: .85rem; margin-top: 12px; text-align: center; }
+  @media (prefers-reduced-motion: no-preference) { .bar > i { transition: width .25s; } }
+</style>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@600;700&family=Figtree:wght@400;600&display=swap">
+
+<div id="app">
+  <header><h1>Mi Tutor de Español</h1><span id="status" aria-live="polite"></span></header>
+  <main id="view"></main>
+  <nav id="tabs">
+    <button data-tab="tutor">Tutor</button>
+    <button data-tab="cards">Cards</button>
+    <button data-tab="quiz">Quiz</button>
+  </nav>
+</div>
+
+<script>
+"use strict";
+/* ---------- Tutor instructions (condensed from the Language Transfer tutor files) ---------- */
+const RULES = `You are a Spanish tutor inspired by the Language Transfer "thinking method". The student is on a phone.
+
+NON-NEGOTIABLE RULES
+1. ONE question per message. Ask one thing, then stop completely.
+2. NEVER give the answer before the student tries, not even inside a hint. Guide with a smaller sub-question or a clue.
+3. Be concise: 1-3 short sentences plus one question.
+4. No markdown, no lists, no bold, no headers. Write like a person talking.
+5. No self-interrupting ("wait, actually"). Decide what to say first.
+6. Don't be a cheerleader. "Yes, exactly" is enough. Save real enthusiasm for real breakthroughs.
+7. Never dump grammar tables and never announce the curriculum.
+
+METHOD
+- Pattern discovery: show 2-3 examples and ask what they notice instead of stating the rule. Start beginners with cognates (-tion becomes -ción, -al stays, preparar from preparación).
+- Block-by-block building: build sentences piece by piece, then ask them to put it together.
+- Error as compass: when wrong, ask a question that leads them to the fix; praise self-corrections.
+- Contextual webs: connect words through roots (confirmar = con + firma).
+- Adaptive pacing: faster when they are accurate, slower and back to blocks when they struggle. Beginners get mostly English with Spanish introduced word by word; use more Spanish as they advance.
+- Use their interests for examples. After 5-6 exchanges on one point, switch topic and circle back later. If they give feedback about your style ("too many hints"), adapt immediately.
+- Be warm, patient, playful, honest about what is hard. Protect their confidence: being wrong is fine, feeling stupid is not.
+
+SESSION
+- New student (notes below are empty): greet briefly, then assess level through natural conversation, one question at a time, starting very simply. Ask about their goals and interests along the way.
+- Returning student: greet in one line, mention what you worked on last time, ask one easy question that revisits it, then continue.
+- Messages in square brackets are instructions from the app, not from the student.`;
+
+const TOPICS = {
+  "Greetings": [["Hola","Hello"],["Buenos días","Good morning"],["Buenas tardes","Good afternoon"],["Buenas noches","Good evening / night"],["Adiós","Goodbye"],["Hasta luego","See you later"],["Por favor","Please"],["Gracias","Thank you"],["De nada","You're welcome"],["Lo siento","I'm sorry"],["Perdón","Excuse me"],["¿Cómo estás?","How are you?"],["Muy bien","Very well"],["Mucho gusto","Nice to meet you"],["Me llamo…","My name is…"]],
+  "Numbers 1–10": [["uno","one"],["dos","two"],["tres","three"],["cuatro","four"],["cinco","five"],["seis","six"],["siete","seven"],["ocho","eight"],["nueve","nine"],["diez","ten"]],
+  "Colors": [["rojo","red"],["azul","blue"],["verde","green"],["amarillo","yellow"],["negro","black"],["blanco","white"],["naranja","orange"],["morado","purple"],["rosa","pink"],["marrón","brown"]],
+  "Food & Drink": [["el agua","water"],["el pan","bread"],["la leche","milk"],["el café","coffee"],["la manzana","apple"],["el queso","cheese"],["el pollo","chicken"],["el arroz","rice"],["la sopa","soup"],["la cuenta, por favor","the check, please"]],
+  "Family": [["la madre","mother"],["el padre","father"],["el hermano","brother"],["la hermana","sister"],["el abuelo","grandfather"],["la abuela","grandmother"],["el hijo","son"],["la hija","daughter"],["el amigo","friend (male)"],["la amiga","friend (female)"]],
+  "Handy Questions": [["¿Dónde está el baño?","Where is the bathroom?"],["¿Cuánto cuesta?","How much does it cost?"],["¿Hablas inglés?","Do you speak English?"],["No entiendo","I don't understand"],["¿Puedes repetir?","Can you repeat?"],["Más despacio, por favor","Slower, please"],["¿Qué es esto?","What is this?"],["Necesito ayuda","I need help"]]
+};
+
+/* ---------- Helpers ---------- */
+const $ = s => document.querySelector(s);
+const view = $("#view");
+const h = (tag, props = {}, ...kids) => {
+  const e = document.createElement(tag);
+  for (const [k, v] of Object.entries(props)) {
+    if (k === "class") e.className = v;
+    else if (k.startsWith("on")) e.addEventListener(k.slice(2), v);
+    else if (v === true) e.setAttribute(k, "");
+    else if (v !== false && v != null) e.setAttribute(k, v);
+  }
+  for (const c of kids.flat()) if (c != null) e.append(c);
+  return e;
+};
+const shuffle = a => { a = a.slice(); for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
+const speak = t => { try { if (!("speechSynthesis" in window)) return; const u = new SpeechSynthesisUtterance(t.replace("…", "")); u.lang = "es-ES"; u.rate = 0.85; speechSynthesis.cancel(); speechSynthesis.speak(u); } catch (e) {} };
+
+/* ---------- State and saving (private cloud copy via db, device copy as backup) ---------- */
+const LS = "mi-tutor-v1";
+const fresh = () => ({ tab: "tutor", topic: Object.keys(TOPICS)[0], pos: {}, known: {}, best: {}, chat: [], notes: "", sinceNotes: 0, updated: 0 });
+let S = fresh();
+try { const raw = JSON.parse(localStorage.getItem(LS) || "null"); if (raw) S = { ...fresh(), ...raw }; } catch (e) {}
+
+let docRef = null, saving = false, dirty = false, timer = 0;
+const setStatus = t => { $("#status").textContent = t; };
+function save() {
+  S.updated = Date.now();
+  try { localStorage.setItem(LS, JSON.stringify(S)); } catch (e) {}
+  if (!docRef) { setStatus("Saved on this device"); return; }
+  setStatus("Saving…");
+  dirty = true; clearTimeout(timer); timer = setTimeout(flush, 700);
+}
+async function flush() {
+  if (saving || !dirty) return;
+  saving = true; dirty = false;
+  try { await docRef.set(JSON.parse(JSON.stringify(S))); setStatus("Progress saved"); }
+  catch (e) { setStatus("Saved on this device only"); }
+  saving = false;
+  if (dirty) flush();
+}
+async function connectStore() {
+  try {
+    const [db, user] = await Promise.all([claude.use("db"), claude.use("user")]);
+    if (!db || !user) return;
+    const id = await user.id();
+    if (!id) return;
+    docRef = db.doc("data/users/" + id + "/progress");
+    const snap = await docRef.get();
+    if (snap.exists && (snap.data().updated || 0) > S.updated && !busy) {
+      S = { ...fresh(), ...snap.data() };
+      try { localStorage.setItem(LS, JSON.stringify(S)); } catch (e) {}
+      show(S.tab);
+    } else if (!snap.exists) { dirty = true; flush(); }
+    setStatus("Progress saved");
+  } catch (e) { docRef = null; }
+}
+
+/* ---------- Tabs ---------- */
+let busy = false, ctl = null;
+function show(tab) {
+  S.tab = tab; save();
+  document.querySelectorAll("#tabs button").forEach(b => b.setAttribute("aria-current", String(b.dataset.tab === tab)));
+  view.replaceChildren();
+  ({ tutor, cards, quiz })[tab]();
+}
+document.querySelectorAll("#tabs button").forEach(b => b.addEventListener("click", () => { if (!busy) show(b.dataset.tab); }));
+
+/* ---------- Tutor ---------- */
+const ERR = {
+  not_granted: "Claude access was declined for this page. Reload and allow it to use the tutor.",
+  rate_limited: "Too many requests or your usage limit was reached. Try again in a little while.",
+  session_expired: "Your session expired. Reload the page and sign in again.",
+  sampling_disabled: "Claude isn't available on this account.",
+};
+function tutor() {
+  const list = h("div", { class: "scroll", id: "chat", "aria-live": "polite" });
+  const input = h("textarea", { id: "msg", rows: 1, placeholder: "Type your answer…", enterkeyhint: "send", autocapitalize: "sentences" });
+  const send = h("button", { class: "primary", id: "send" }, "Send");
+  const stop = h("button", { id: "stop", hidden: true }, "Stop");
+  const accents = h("div", { class: "accents", "aria-label": "Spanish letters" },
+    ["á", "é", "í", "ó", "ú", "ñ", "ü", "¿", "¡"].map(c => h("button", { type: "button", "aria-label": "insert " + c, onclick: () => { input.setRangeText(c, input.selectionStart, input.selectionEnd, "end"); input.focus(); } }, c)));
+  const tools = h("div", { class: "tools" }, h("span", { class: "hint", id: "hintline" }), h("span", {}, h("button", { class: "quiet", id: "reset" }, "Start over")));
+  const composer = h("div", {}, accents, h("div", { class: "composer" }, input, stop, send), tools);
+  view.append(list, composer);
+
+  const bubble = (m) => h("div", { class: "msg " + (m.role === "user" ? "me" : "tutor") }, m.content);
+  const toBottom = () => { list.scrollTop = list.scrollHeight; };
+  const visible = () => S.chat.filter(m => !m.hidden);
+
+  if (!S.chat.length) {
+    list.append(h("div", { class: "banner" },
+      h("h2", {}, "Learn by working it out yourself"),
+      h("p", {}, "Your tutor asks one question at a time and lets you discover the patterns. No tables, no memorizing. It remembers where you stopped."),
+      h("button", { class: "primary", onclick: () => ask("[The student is ready to begin. Greet them briefly and start the assessment.]", true) }, "Start my first lesson")));
+  } else {
+    visible().forEach(m => list.append(bubble(m)));
+    const mins = Math.round((Date.now() - (S.updated || Date.now())) / 60000);
+    if (mins > 20 && S.chat.length) {
+      list.append(h("div", { class: "banner" },
+        h("p", {}, "Welcome back. Your conversation is saved."),
+        h("button", { class: "primary", onclick: (e) => { e.target.parentElement.remove(); ask("[The student is back after a break. Remind them in one line what you worked on last, then ask one easy question that revisits it.]", true); } }, "Pick up where I left off")));
+    }
+  }
+  toBottom();
+
+  function grow() { input.style.height = "auto"; input.style.height = Math.min(input.scrollHeight, 120) + "px"; }
+  input.addEventListener("input", grow);
+  input.addEventListener("keydown", e => { if (e.key === "Enter" && !e.shiftKey && !matchMedia("(pointer: coarse)").matches) { e.preventDefault(); go(); } });
+  send.addEventListener("click", go);
+  stop.addEventListener("click", () => ctl && ctl.abort());
+  function go() { const t = input.value.trim(); if (!t || busy) return; input.value = ""; grow(); ask(t, false); }
+
+  let confirming = false;
+  $("#reset").addEventListener("click", e => {
+    if (busy) return;
+    if (!confirming) { confirming = true; e.target.textContent = "Tap again to erase chat and notes"; setTimeout(() => { confirming = false; e.target.textContent = "Start over"; }, 4000); return; }
+    S.chat = []; S.notes = ""; S.sinceNotes = 0; save(); show("tutor");
+  });
+
+  async function ask(text, hidden) {
+    const sample = await claude.use("sample");
+    if (!sample) { list.append(h("div", { class: "msg note" }, "The tutor needs Claude, which isn't available in this view. Cards and Quiz still work.")); return; }
+    S.chat.push({ role: "user", content: text, hidden: !!hidden });
+    if (!hidden) list.append(bubble({ role: "user", content: text }));
+    list.querySelectorAll(".banner").forEach(b => b.remove());
+    const out = h("div", { class: "msg tutor" }, "Thinking…");
+    list.append(out); toBottom();
+    busy = true; send.disabled = true; stop.hidden = false; ctl = new AbortController();
+    save();
+    const turns = S.chat.slice(-30).map(m => ({ role: m.role, content: m.content }));
+    const lead = RULES + "\n\nLEARNER NOTES (from earlier sessions):\n" + (S.notes || "(empty: new student)");
+    try {
+      const { text: reply } = await sample([{ role: "user", content: lead }, ...turns], {
+        cache: false, signal: ctl.signal, modelTier: "default",
+        onText: ({ text }) => { out.textContent = text; toBottom(); },
+      });
+      S.chat.push({ role: "assistant", content: reply });
+      S.chat = S.chat.slice(-60);
+      S.sinceNotes++; save();
+      if (S.sinceNotes >= 6) updateNotes();
+    } catch (e) {
+      const partial = e && e.text;
+      if (partial) { out.textContent = partial; S.chat.push({ role: "assistant", content: partial }); }
+      else { out.remove(); if (!hidden) { S.chat.pop(); input.value = text; } else S.chat.pop(); }
+      if (!e || e.code !== "cancelled") list.append(h("div", { class: "msg note" }, ERR[e && e.code] || "That didn't go through. Tap Send to try again."));
+      save();
+    } finally {
+      busy = false; send.disabled = false; stop.hidden = true; ctl = null; toBottom();
+    }
+  }
+}
+
+async function updateNotes() {
+  try {
+    const sample = await claude.use("sample");
+    if (!sample) return;
+    const recent = S.chat.slice(-14).filter(m => !m.hidden).map(m => (m.role === "user" ? "Student: " : "Tutor: ") + m.content).join("\n");
+    const prompt = "You keep short private notes for a Spanish tutor about one student. Update the notes using the recent conversation. Keep it under 900 characters, plain text, these labels on separate lines: Level, Solid, Shaky, Error patterns, How they like to learn, Interests, Goals, Last topic and where we stopped. Keep older facts that still hold, drop what is resolved. Reply with the notes only.\n\nCURRENT NOTES:\n" + (S.notes || "(none)") + "\n\nRECENT CONVERSATION:\n" + recent;
+    const { text } = await sample(prompt, { modelTier: "quick", cache: false });
+    S.notes = text.slice(0, 1500); S.sinceNotes = 0; save();
+  } catch (e) { /* notes are best effort */ }
+}
+
+/* ---------- Cards ---------- */
+function topicPicker(onchange) {
+  const sel = h("select", { id: "topic", "aria-label": "Topic" }, Object.keys(TOPICS).map(t => h("option", { value: t, selected: t === S.topic }, t)));
+  sel.addEventListener("change", () => { S.topic = sel.value; save(); onchange(); });
+  return sel;
+}
+function cards() {
+  const deck = TOPICS[S.topic];
+  const known = new Set(S.known[S.topic] || []);
+  let i = Math.min(S.pos[S.topic] || 0, deck.length - 1), flipped = false;
+  const body = h("div", { class: "scroll" });
+  view.append(body);
+  const draw = () => {
+    const [es, en] = deck[i];
+    body.replaceChildren(
+      topicPicker(() => show("cards")),
+      h("div", { class: "bar", role: "progressbar", "aria-valuemin": 0, "aria-valuemax": deck.length, "aria-valuenow": known.size }, h("i", { style: `width:${(known.size / deck.length) * 100}%` })),
+      h("div", { class: "card" },
+        h("div", { class: "hint" }, `Card ${i + 1} of ${deck.length}${known.has(es) ? " · marked known" : ""}`),
+        h("div", { class: "word", role: "button", tabindex: 0, onclick: () => { flipped = !flipped; draw(); }, onkeydown: e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); flipped = !flipped; draw(); } } }, flipped ? en : es),
+        h("div", { class: "hint" }, flipped ? "English. Tap to flip back." : "Tap the word to see English."),
+        h("button", { onclick: () => speak(es) }, "🔊 Hear it")),
+      h("div", { class: "row" },
+        h("button", { onclick: () => step(false) }, "Again later"),
+        h("button", { class: "primary", onclick: () => step(true) }, "Got it")),
+      h("div", { class: "stats" }, `${known.size} of ${deck.length} known in ${S.topic}`));
+  };
+  function step(gotIt) {
+    const es = deck[i][0];
+    if (gotIt) known.add(es); else known.delete(es);
+    S.known[S.topic] = [...known];
+    i = (i + 1) % deck.length; S.pos[S.topic] = i; flipped = false; save(); draw();
+  }
+  draw();
+}
+
+/* ---------- Quiz ---------- */
+function quiz() {
+  const words = TOPICS[S.topic], qs = shuffle(words).slice(0, 8);
+  let i = 0, score = 0;
+  const body = h("div", { class: "scroll" });
+  view.append(body);
+  const picker = () => topicPicker(() => show("quiz"));
+  const ask = () => {
+    if (i >= qs.length) return done();
+    const [es, en] = qs[i];
+    const opts = shuffle([en, ...shuffle(words.filter(w => w[1] !== en)).slice(0, 3).map(w => w[1])]);
+    const btns = opts.map(o => h("button", { onclick: e => pick(e.currentTarget, o === en, en) }, o));
+    const holder = h("div", { class: "choices" }, btns);
+    body.replaceChildren(picker(),
+      h("div", { class: "bar" }, h("i", { style: `width:${(i / qs.length) * 100}%` })),
+      h("div", { class: "card" }, h("div", { class: "hint" }, `Question ${i + 1} of ${qs.length}. What does this mean?`), h("div", { class: "word" }, es), h("button", { onclick: () => speak(es) }, "🔊 Hear it"), holder));
+    function pick(btn, ok, answer) {
+      if (ok) score++;
+      btns.forEach(b => { b.disabled = true; if (b.textContent === answer) b.classList.add("right"); });
+      if (!ok) btn.classList.add("wrong");
+      setTimeout(() => { i++; ask(); }, 900);
+    }
+  };
+  const done = () => {
+    S.best[S.topic] = Math.max(S.best[S.topic] || 0, score); save();
+    body.replaceChildren(picker(), h("div", { class: "card" },
+      h("div", { class: "word" }, `${score} / ${qs.length}`),
+      h("p", {}, score === qs.length ? "¡Perfecto!" : score >= qs.length / 2 ? "¡Muy bien! Keep going." : "Review these in Cards, then try again."),
+      h("div", { class: "hint" }, `Best on ${S.topic}: ${S.best[S.topic]} / ${qs.length}`),
+      h("div", { class: "row" }, h("button", { class: "primary", onclick: () => show("quiz") }, "Try again"), h("button", { onclick: () => show("cards") }, "Review cards"))));
+  };
+  ask();
+}
+
+/* ---------- Start ---------- */
+setStatus("Saved on this device");
+show(["tutor", "cards", "quiz"].includes(S.tab) ? S.tab : "tutor");
+connectStore();
+</script>
