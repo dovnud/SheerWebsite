@@ -43,7 +43,7 @@
   button.quiet { border-color: transparent; background: transparent; color: var(--muted); min-height: 36px; padding: 6px 10px; font-size: .85rem; }
 
   /* tab bar */
-  nav { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; padding: 8px 0 max(8px, env(safe-area-inset-bottom, 0px)); border-top: 1px solid var(--line); }
+  nav { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; padding: 8px 0 max(8px, env(safe-area-inset-bottom, 0px)); border-top: 1px solid var(--line); }
   nav button { border: none; background: transparent; font-weight: 600; color: var(--muted); }
   nav button[aria-current="true"] { background: var(--accent-soft); color: var(--accent); }
 
@@ -61,6 +61,17 @@
   .accents { display: flex; gap: 4px; flex-wrap: wrap; padding-bottom: 6px; }
   .accents button { min-height: 36px; min-width: 36px; padding: 4px 8px; }
 
+  .chips { display: flex; gap: 6px; padding-bottom: 8px; flex-wrap: wrap; }
+  .chip { border-radius: 99px; min-height: 36px; padding: 4px 14px; font-size: .9rem; color: var(--muted); }
+  .chip[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: var(--accent-fg); font-weight: 600; }
+  .banner button { text-align: left; }
+  .words { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; }
+  .w { padding: 2px 8px; border-radius: 8px; font-weight: 600; }
+  .w-ok { background: color-mix(in srgb, var(--ok) 22%, var(--surface)); }
+  .w-accent { background: color-mix(in srgb, var(--sun) 30%, var(--surface)); }
+  .w-miss { background: color-mix(in srgb, var(--bad) 25%, var(--surface)); }
+  .score { font: 700 1.6rem/1.2 var(--display); }
+  .card textarea { width: 100%; font: inherit; color: var(--fg); background: var(--bg); border: 1px solid var(--line); border-radius: 12px; padding: 10px; resize: none; }
   /* cards and quiz */
   select { font: inherit; color: var(--fg); background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 10px; width: 100%; min-height: 44px; margin: 4px 0 12px; }
   .bar { height: 6px; background: var(--line); border-radius: 99px; overflow: hidden; margin: 6px 0 12px; }
@@ -82,6 +93,7 @@
   <main id="view"></main>
   <nav id="tabs">
     <button data-tab="tutor">Tutor</button>
+    <button data-tab="speak">Speak</button>
     <button data-tab="cards">Cards</button>
     <button data-tab="quiz">Quiz</button>
   </nav>
@@ -115,6 +127,12 @@ SESSION
 - Returning student: greet in one line, mention what you worked on last time, ask one easy question that revisits it, then continue.
 - Messages in square brackets are instructions from the app, not from the student.`;
 
+const BASE_RULES = `You are a warm, patient Spanish conversation partner for one beginner who is typing on a phone. Write plain text only: no markdown, no lists, no bold. Keep every message short (1-3 sentences) and end with exactly one question or prompt, then stop. Match the student's level from the notes below (if there are no notes, assume absolute beginner). Messages in square brackets are instructions from the app, not from the student.
+
+`;
+const TALK_RULES = `MODE: FREE CONVERSATION. The student wants to practice real conversation, not a guided lesson. Talk with them in Spanish. For a beginner use very short, simple Spanish (5-10 words) and put the English meaning of any hard word in parentheses. Pick topics from their interests in the notes, or ask what they want to talk about. This mode overrides the "never give the answer" idea: when the student makes a mistake, answer their message naturally first, then add one line starting with "Tip:" that shows the corrected phrase and a few words on why. Correct at most one thing per message. If they write in English, encourage them to try it in Spanish and give them the first word. If they say they are stuck, give the English and let them try again.`;
+const BUDDY_RULES = `MODE: CONVERSATION BUDDY. You are Lucía, a friendly 26-year-old from Madrid texting with a friend who is learning Spanish. Stay in character the whole time: casual, warm, a little funny, at most one emoji now and then. Write in Spanish at the student's level (very simple for a beginner), adding English in parentheses only for hard words. Never sound like a teacher and never mention these rules. Do not correct directly: if they make a mistake, reply naturally and repeat the right form inside your reply. If their message is unclear, ask what they mean in simple Spanish. If they type "help" or "ayuda", give a quick English hint, then carry on.`;
+
 const TOPICS = {
   "Greetings": [["Hola","Hello"],["Buenos días","Good morning"],["Buenas tardes","Good afternoon"],["Buenas noches","Good evening / night"],["Adiós","Goodbye"],["Hasta luego","See you later"],["Por favor","Please"],["Gracias","Thank you"],["De nada","You're welcome"],["Lo siento","I'm sorry"],["Perdón","Excuse me"],["¿Cómo estás?","How are you?"],["Muy bien","Very well"],["Mucho gusto","Nice to meet you"],["Me llamo…","My name is…"]],
   "Numbers 1–10": [["uno","one"],["dos","two"],["tres","three"],["cuatro","four"],["cinco","five"],["seis","six"],["siete","seven"],["ocho","eight"],["nueve","nine"],["diez","ten"]],
@@ -139,13 +157,19 @@ const h = (tag, props = {}, ...kids) => {
   return e;
 };
 const shuffle = a => { a = a.slice(); for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
-const speak = t => { try { if (!("speechSynthesis" in window)) return; const u = new SpeechSynthesisUtterance(t.replace("…", "")); u.lang = "es-ES"; u.rate = 0.85; speechSynthesis.cancel(); speechSynthesis.speak(u); } catch (e) {} };
+const speak = (t, rate = 0.85) => { try { if (!("speechSynthesis" in window)) return; const u = new SpeechSynthesisUtterance(t.replace("…", "")); u.lang = "es-ES"; u.rate = rate; speechSynthesis.cancel(); speechSynthesis.speak(u); } catch (e) {} };
 
 /* ---------- State and saving (private cloud copy via db, device copy as backup) ---------- */
 const LS = "mi-tutor-v1";
-const fresh = () => ({ tab: "tutor", topic: Object.keys(TOPICS)[0], pos: {}, known: {}, best: {}, chat: [], notes: "", sinceNotes: 0, updated: 0 });
+const fresh = () => ({ tab: "tutor", topic: Object.keys(TOPICS)[0], pos: {}, known: {}, best: {}, chats: { lesson: [], talk: [], buddy: [] }, mode: "lesson", speak: {}, speakKind: "say", notes: "", sinceNotes: 0, updated: 0 });
+function migrate(o) {
+  const f = fresh();
+  if (o.chat && o.chat.length && !(o.chats && o.chats.lesson && o.chats.lesson.length)) o.chats = { ...(o.chats || {}), lesson: o.chat };
+  delete o.chat;
+  return { ...f, ...o, chats: { ...f.chats, ...(o.chats || {}) } };
+}
 let S = fresh();
-try { const raw = JSON.parse(localStorage.getItem(LS) || "null"); if (raw) S = { ...fresh(), ...raw }; } catch (e) {}
+try { const raw = JSON.parse(localStorage.getItem(LS) || "null"); if (raw) S = migrate(raw); } catch (e) {}
 
 let docRef = null, saving = false, dirty = false, timer = 0;
 const setStatus = t => { $("#status").textContent = t; };
@@ -173,7 +197,7 @@ async function connectStore() {
     docRef = db.doc("data/users/" + id + "/progress");
     const snap = await docRef.get();
     if (snap.exists && (snap.data().updated || 0) > S.updated && !busy) {
-      S = { ...fresh(), ...snap.data() };
+      S = migrate({ ...snap.data() });
       try { localStorage.setItem(LS, JSON.stringify(S)); } catch (e) {}
       show(S.tab);
     } else if (!snap.exists) { dirty = true; flush(); }
@@ -187,49 +211,70 @@ function show(tab) {
   S.tab = tab; save();
   document.querySelectorAll("#tabs button").forEach(b => b.setAttribute("aria-current", String(b.dataset.tab === tab)));
   view.replaceChildren();
-  ({ tutor, cards, quiz })[tab]();
+  ({ tutor, speak: speaking, cards, quiz })[tab]();
 }
 document.querySelectorAll("#tabs button").forEach(b => b.addEventListener("click", () => { if (!busy) show(b.dataset.tab); }));
 
-/* ---------- Tutor ---------- */
+/* ---------- Tutor (Lesson, Conversation, Buddy) ---------- */
 const ERR = {
   not_granted: "Claude access was declined for this page. Reload and allow it to use the tutor.",
   rate_limited: "Too many requests or your usage limit was reached. Try again in a little while.",
   session_expired: "Your session expired. Reload the page and sign in again.",
   sampling_disabled: "Claude isn't available on this account.",
 };
+const BACK_GENERIC = "[The student is back after a break. Continue with one short natural message that picks up the last topic.]";
+const MODES = {
+  lesson: { label: "Lesson", title: "Learn by working it out yourself", blurb: "Your tutor asks one question at a time and lets you discover the patterns. No tables, no memorizing.", cta: "Start my first lesson",
+    start: "[The student is ready to begin. Greet them briefly and start the assessment.]",
+    back: "[The student is back after a break. Remind them in one line what you worked on last, then ask one easy question that revisits it.]", ph: "Type your answer…" },
+  talk: { label: "Conversation", title: "Just talk", blurb: "Free conversation in Spanish at your level. You get a short tip when something can be said better.", cta: "Start talking",
+    start: "[Start a conversation. If the notes name interests, open with a simple question about one; otherwise ask what they would like to talk about, in very simple Spanish.]",
+    back: BACK_GENERIC, ph: "Write in Spanish…" },
+  buddy: { label: "Buddy", title: "Meet Lucía", blurb: "A friendly Spanish speaker who texts you. She stays in character and quietly models the right phrasing.", cta: null,
+    start: null, back: BACK_GENERIC, ph: "Message Lucía…",
+    scenarios: ["Chat about my day", "Order at a café", "Ask for directions", "Meet someone new"] },
+};
+function leadFor(mode) {
+  const notes = "\n\nLEARNER NOTES (from earlier sessions):\n" + (S.notes || "(empty: new student)");
+  if (mode === "lesson") return RULES + notes;
+  return BASE_RULES + (mode === "talk" ? TALK_RULES : BUDDY_RULES) + notes;
+}
+
 function tutor() {
+  const mode = S.mode in MODES ? S.mode : "lesson", M = MODES[mode];
+  const chat = S.chats[mode];
   const list = h("div", { class: "scroll", id: "chat", "aria-live": "polite" });
-  const input = h("textarea", { id: "msg", rows: 1, placeholder: "Type your answer…", enterkeyhint: "send", autocapitalize: "sentences" });
+  const input = h("textarea", { id: "msg", rows: 1, placeholder: M.ph, enterkeyhint: "send", autocapitalize: "sentences" });
   const send = h("button", { class: "primary", id: "send" }, "Send");
   const stop = h("button", { id: "stop", hidden: true }, "Stop");
+  const modes = h("div", { class: "chips", role: "group", "aria-label": "Mode" }, Object.entries(MODES).map(([k, v]) =>
+    h("button", { class: "chip", "aria-pressed": String(k === mode), onclick: () => { if (busy || k === mode) return; S.mode = k; save(); show("tutor"); } }, v.label)));
   const accents = h("div", { class: "accents", "aria-label": "Spanish letters" },
     ["á", "é", "í", "ó", "ú", "ñ", "ü", "¿", "¡"].map(c => h("button", { type: "button", "aria-label": "insert " + c, onclick: () => { input.setRangeText(c, input.selectionStart, input.selectionEnd, "end"); input.focus(); } }, c)));
-  const tools = h("div", { class: "tools" }, h("span", { class: "hint", id: "hintline" }), h("span", {}, h("button", { class: "quiet", id: "reset" }, "Start over")));
-  const composer = h("div", {}, accents, h("div", { class: "composer" }, input, stop, send), tools);
-  view.append(list, composer);
+  const tools = h("div", { class: "tools" }, h("span", { class: "hint" }, "Tip: your keyboard's mic key lets you speak Spanish."), h("button", { class: "quiet", id: "reset" }, "Start over"));
+  view.append(modes, list, h("div", {}, accents, h("div", { class: "composer" }, input, stop, send), tools));
 
-  const bubble = (m) => h("div", { class: "msg " + (m.role === "user" ? "me" : "tutor") }, m.content);
+  const bubble = m => h("div", { class: "msg " + (m.role === "user" ? "me" : "tutor") }, m.content);
   const toBottom = () => { list.scrollTop = list.scrollHeight; };
-  const visible = () => S.chat.filter(m => !m.hidden);
 
-  if (!S.chat.length) {
-    list.append(h("div", { class: "banner" },
-      h("h2", {}, "Learn by working it out yourself"),
-      h("p", {}, "Your tutor asks one question at a time and lets you discover the patterns. No tables, no memorizing. It remembers where you stopped."),
-      h("button", { class: "primary", onclick: () => ask("[The student is ready to begin. Greet them briefly and start the assessment.]", true) }, "Start my first lesson")));
+  if (!chat.length) {
+    const banner = h("div", { class: "banner" }, h("h2", {}, M.title), h("p", {}, M.blurb));
+    if (M.cta) banner.append(h("button", { class: "primary", onclick: () => ask(M.start, true) }, M.cta));
+    if (M.scenarios) {
+      banner.append(h("p", {}, "Pick something to talk about:"));
+      M.scenarios.forEach(s => banner.append(h("button", { onclick: () => ask("[Start the chat. Scenario: " + s + ". Send your first message in character.]", true) }, s)));
+    }
+    list.append(banner);
   } else {
-    visible().forEach(m => list.append(bubble(m)));
-    const mins = Math.round((Date.now() - (S.updated || Date.now())) / 60000);
-    if (mins > 20 && S.chat.length) {
-      list.append(h("div", { class: "banner" },
-        h("p", {}, "Welcome back. Your conversation is saved."),
-        h("button", { class: "primary", onclick: (e) => { e.target.parentElement.remove(); ask("[The student is back after a break. Remind them in one line what you worked on last, then ask one easy question that revisits it.]", true); } }, "Pick up where I left off")));
+    chat.filter(m => !m.hidden).forEach(m => list.append(bubble(m)));
+    if ((Date.now() - (S.updated || Date.now())) / 60000 > 20) {
+      list.append(h("div", { class: "banner" }, h("p", {}, "Welcome back. Your conversation is saved."),
+        h("button", { class: "primary", onclick: e => { e.target.parentElement.remove(); ask(M.back, true); } }, "Pick up where I left off")));
     }
   }
   toBottom();
 
-  function grow() { input.style.height = "auto"; input.style.height = Math.min(input.scrollHeight, 120) + "px"; }
+  const grow = () => { input.style.height = "auto"; input.style.height = Math.min(input.scrollHeight, 120) + "px"; };
   input.addEventListener("input", grow);
   input.addEventListener("keydown", e => { if (e.key === "Enter" && !e.shiftKey && !matchMedia("(pointer: coarse)").matches) { e.preventDefault(); go(); } });
   send.addEventListener("click", go);
@@ -239,35 +284,34 @@ function tutor() {
   let confirming = false;
   $("#reset").addEventListener("click", e => {
     if (busy) return;
-    if (!confirming) { confirming = true; e.target.textContent = "Tap again to erase chat and notes"; setTimeout(() => { confirming = false; e.target.textContent = "Start over"; }, 4000); return; }
-    S.chat = []; S.notes = ""; S.sinceNotes = 0; save(); show("tutor");
+    if (!confirming) { confirming = true; e.target.textContent = "Tap again to erase this chat"; setTimeout(() => { confirming = false; e.target.textContent = "Start over"; }, 4000); return; }
+    S.chats[mode] = []; save(); show("tutor");
   });
 
   async function ask(text, hidden) {
     const sample = await claude.use("sample");
-    if (!sample) { list.append(h("div", { class: "msg note" }, "The tutor needs Claude, which isn't available in this view. Cards and Quiz still work.")); return; }
-    S.chat.push({ role: "user", content: text, hidden: !!hidden });
+    if (!sample) { list.append(h("div", { class: "msg note" }, "The tutor needs Claude, which isn't available in this view. Cards, Speak and Quiz still work.")); return; }
+    chat.push({ role: "user", content: text, hidden: !!hidden });
     if (!hidden) list.append(bubble({ role: "user", content: text }));
     list.querySelectorAll(".banner").forEach(b => b.remove());
     const out = h("div", { class: "msg tutor" }, "Thinking…");
     list.append(out); toBottom();
     busy = true; send.disabled = true; stop.hidden = false; ctl = new AbortController();
     save();
-    const turns = S.chat.slice(-30).map(m => ({ role: m.role, content: m.content }));
-    const lead = RULES + "\n\nLEARNER NOTES (from earlier sessions):\n" + (S.notes || "(empty: new student)");
+    const turns = chat.slice(-30).map(m => ({ role: m.role, content: m.content }));
     try {
-      const { text: reply } = await sample([{ role: "user", content: lead }, ...turns], {
+      const { text: reply } = await sample([{ role: "user", content: leadFor(mode) }, ...turns], {
         cache: false, signal: ctl.signal, modelTier: "default",
         onText: ({ text }) => { out.textContent = text; toBottom(); },
       });
-      S.chat.push({ role: "assistant", content: reply });
-      S.chat = S.chat.slice(-60);
+      chat.push({ role: "assistant", content: reply });
+      if (chat.length > 60) chat.splice(0, chat.length - 60);
       S.sinceNotes++; save();
-      if (S.sinceNotes >= 6) updateNotes();
+      if (S.sinceNotes >= 6) updateNotes(chat);
     } catch (e) {
       const partial = e && e.text;
-      if (partial) { out.textContent = partial; S.chat.push({ role: "assistant", content: partial }); }
-      else { out.remove(); if (!hidden) { S.chat.pop(); input.value = text; } else S.chat.pop(); }
+      if (partial) { out.textContent = partial; chat.push({ role: "assistant", content: partial }); }
+      else { out.remove(); chat.pop(); if (!hidden) input.value = text; }
       if (!e || e.code !== "cancelled") list.append(h("div", { class: "msg note" }, ERR[e && e.code] || "That didn't go through. Tap Send to try again."));
       save();
     } finally {
@@ -276,15 +320,79 @@ function tutor() {
   }
 }
 
-async function updateNotes() {
+async function updateNotes(chat) {
   try {
     const sample = await claude.use("sample");
     if (!sample) return;
-    const recent = S.chat.slice(-14).filter(m => !m.hidden).map(m => (m.role === "user" ? "Student: " : "Tutor: ") + m.content).join("\n");
+    const recent = chat.slice(-14).filter(m => !m.hidden).map(m => (m.role === "user" ? "Student: " : "Tutor: ") + m.content).join("\n");
     const prompt = "You keep short private notes for a Spanish tutor about one student. Update the notes using the recent conversation. Keep it under 900 characters, plain text, these labels on separate lines: Level, Solid, Shaky, Error patterns, How they like to learn, Interests, Goals, Last topic and where we stopped. Keep older facts that still hold, drop what is resolved. Reply with the notes only.\n\nCURRENT NOTES:\n" + (S.notes || "(none)") + "\n\nRECENT CONVERSATION:\n" + recent;
     const { text } = await sample(prompt, { modelTier: "quick", cache: false });
     S.notes = text.slice(0, 1500); S.sinceNotes = 0; save();
   } catch (e) { /* notes are best effort */ }
+}
+
+/* ---------- Speech test ---------- */
+const stripAcc = s => s.normalize("NFD").replace(/[̀-ͯ]/g, "").normalize("NFC");
+const norm = s => s.toLowerCase().replace(/[¿¡?!.,…;:"“”()]/g, "").replace(/\s+/g, " ").trim();
+function compare(target, said, lenient) {
+  const pool = norm(said).split(" ").filter(Boolean);
+  const words = norm(target).split(" ");
+  let pts = 0;
+  const marks = words.map(w => {
+    let k = pool.indexOf(w);
+    if (k >= 0) { pool.splice(k, 1); pts += 1; return "ok"; }
+    k = pool.findIndex(p => stripAcc(p).replace(/ñ/g, "n") === stripAcc(w).replace(/ñ/g, "n"));
+    if (k >= 0) { pool.splice(k, 1); pts += lenient ? 1 : 0.5; return lenient ? "ok" : "accent"; }
+    return "miss";
+  });
+  return { words, marks, pct: Math.round((pts / words.length) * 100) };
+}
+function speaking() {
+  const kind = S.speakKind === "listen" ? "listen" : "say";
+  const body = h("div", { class: "scroll" });
+  view.append(body);
+  const picks = shuffle(Object.values(TOPICS).flat()).slice(0, 6);
+  let i = 0, total = 0, checked = null;
+  const kinds = h("div", { class: "chips", role: "group", "aria-label": "Test type" },
+    [["say", "Say it"], ["listen", "Listen & type"]].map(([k, l]) => h("button", { class: "chip", "aria-pressed": String(k === kind), onclick: () => { S.speakKind = k; save(); show("speak"); } }, l)));
+  const draw = () => {
+    if (i >= picks.length) return finish();
+    const [es, en] = picks[i];
+    const field = h("textarea", { id: "said", rows: 2, lang: "es", autocapitalize: "none", autocorrect: "off", spellcheck: false, placeholder: kind === "say" ? "Tap your keyboard's mic and say it…" : "Type what you hear…" });
+    const result = h("div", { "aria-live": "polite" });
+    const check = h("button", { class: "primary" }, "Check");
+    check.addEventListener("click", () => {
+      if (checked || !field.value.trim()) return;
+      checked = compare(es, field.value, kind === "say");
+      total += checked.pct;
+      field.readOnly = true; check.hidden = true;
+      result.replaceChildren(
+        h("div", { class: "words" }, checked.words.map((w, j) => h("span", { class: "w w-" + checked.marks[j] }, w))),
+        h("div", { class: "score" }, checked.pct + "%"),
+        h("div", { class: "hint" }, checked.marks.includes("accent") ? "Right letters, missing accent marks. They change how the word is stressed." : checked.pct === 100 ? "Perfect." : "Pink words were missed. Hear it again and retry the next one."),
+        h("div", { class: "row" }, h("button", { class: "primary", onclick: () => { i++; checked = null; draw(); } }, i === picks.length - 1 ? "See result" : "Next phrase")));
+    });
+    body.replaceChildren(kinds,
+      h("div", { class: "bar" }, h("i", { style: `width:${(i / picks.length) * 100}%` })),
+      h("div", { class: "card" },
+        h("div", { class: "hint" }, `Phrase ${i + 1} of ${picks.length}` + (kind === "say" ? ". Say it in Spanish." : ". Listen, then type it.")),
+        kind === "say" ? h("div", { class: "word" }, es) : h("div", { class: "word" }, "🔊 ?"),
+        kind === "say" ? h("div", { class: "hint" }, en) : null,
+        h("div", { class: "row" }, h("button", { onclick: () => speak(es) }, "🔊 Hear it"), h("button", { onclick: () => speak(es, 0.55) }, "🐢 Slowly")),
+        field, check, result));
+    if (kind === "listen") speak(es);
+  };
+  const finish = () => {
+    const avg = Math.round(total / picks.length);
+    S.speak = S.speak || {}; S.speak[kind] = Math.max(S.speak[kind] || 0, avg); save();
+    body.replaceChildren(kinds, h("div", { class: "card" },
+      h("div", { class: "word" }, avg + "%"),
+      h("p", {}, avg >= 90 ? "¡Excelente!" : avg >= 60 ? "¡Muy bien! Keep at it." : "Good start. Replay the phrases in Cards, then try again."),
+      h("div", { class: "hint" }, `Best ${kind === "say" ? "Say it" : "Listen & type"} score: ${S.speak[kind]}%`),
+      h("div", { class: "row" }, h("button", { class: "primary", onclick: () => show("speak") }, "New round"))),
+      h("div", { class: "stats" }, "The page can't use the microphone itself, so Say it relies on your keyboard's dictation. Turn on a Spanish keyboard for best results."));
+  };
+  draw();
 }
 
 /* ---------- Cards ---------- */
@@ -359,6 +467,6 @@ function quiz() {
 
 /* ---------- Start ---------- */
 setStatus("Saved on this device");
-show(["tutor", "cards", "quiz"].includes(S.tab) ? S.tab : "tutor");
+show(["tutor", "speak", "cards", "quiz"].includes(S.tab) ? S.tab : "tutor");
 connectStore();
 </script>
