@@ -227,7 +227,7 @@ html:not(.js) .roll { display: none; }
 .closing .tw { text-transform: uppercase; }
 
 /* ---- footer / contact ---- */
-.footer { position: relative; min-height: 100svh; color: #fff; display: grid; grid-template-rows: 1fr auto; }
+.footer { position: relative; min-height: 100svh; color: var(--metal-ink, #fff); display: grid; grid-template-rows: 1fr auto; }
 html:not(.has-gl) .footer { background: #000; }
 .contact-inner { position: relative; z-index: 2; padding-top: 70px; row-gap: 0; align-content: start; grid-template-rows: auto auto 1fr auto; min-height: calc(100svh - 15vw); }
 .person { grid-column: span 2; }

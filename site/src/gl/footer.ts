@@ -15,10 +15,10 @@ export class FooterPhysics {
   readonly clip = new THREE.Plane(new THREE.Vector3(0, -1, 0), 0);
   private tmpQ = new THREE.Quaternion(); private tmpA = new THREE.Vector3();
 
-  async init(vw: number, fh: number) {
+  async init(vw: number, fh: number, color = 0x0b0b0b, metalness = 0.12) {
     this.vw = vw;
     const geos = [ringGeometry(), plusGeometry(), asteriskGeometry(), haloGeometry(), ringGeometry(), plusGeometry()];
-    const mat = new THREE.MeshStandardMaterial({ color: 0x0b0b0b, roughness: 0.34, metalness: 0.12, envMapIntensity: 0.8 });
+    const mat = new THREE.MeshStandardMaterial({ color, roughness: 0.34, metalness, envMapIntensity: 0.8 });
     mat.clippingPlanes = [this.clip];
     const u = Math.min(64, Math.max(26, vw * 0.042));
     const N = vw < 768 ? 16 : 26;

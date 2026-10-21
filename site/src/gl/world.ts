@@ -85,13 +85,13 @@ export class World {
     if (this.heroObj.obj instanceof THREE.Mesh && (asked ?? 'sd') === 'sd') { this.projection = new Projection(this.heroObj.obj, this.o.reduced); this.chevron.add(this.projection.mesh); }
 
     // services: three abstract objects, one per chapter, shown only while that chapter has no real show media
-    const dark = new THREE.MeshStandardMaterial({ color: this.o.theme.svcObj, roughness: 0.34, metalness: 0.1, envMapIntensity: 0.8 });
+    const dark = new THREE.MeshStandardMaterial({ color: this.o.theme.metal, roughness: 0.34, metalness: this.o.theme.metalness, envMapIntensity: 0.8 });
     [ringGeometry(), asteriskGeometry(), orbGeometry()].forEach((g) => { const m = new THREE.Mesh(g, dark); m.scale.setScalar(0.0001); this.svc.add(m); this.svcObjs.push(m); });
 
     this.liquid = new LiquidPass(this.vw, this.vh, this.dpr, this.o.theme); this.syncLiquid();
     this.resize();
     this.footer.onKick = () => this.onKick?.();
-    await this.footer.init(this.vw, Math.max(this.footerEl.offsetHeight, this.vh));
+    await this.footer.init(this.vw, Math.max(this.footerEl.offsetHeight, this.vh), this.o.theme.metal, this.o.theme.metalness);
     if (this.o.reduced) this.footer.settle();
     this.ready = true;
   }
