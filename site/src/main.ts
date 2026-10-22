@@ -10,7 +10,8 @@ import { qs, qsa, pad3, reducedMotion, hasWebGL2 } from './util';
 import { AudioEngine } from './audio';
 import { initGrain } from './grain';
 import { initTrail } from './trail';
-import { initScratch } from './scratch';
+import { initStory } from './story';
+import { initGallery } from './gallery';
 import { initReveals } from './reveals';
 import { initServices } from './services';
 import { initContact } from './contact';
@@ -58,7 +59,7 @@ async function boot() {
 
   const grainTick = initGrain(qs<HTMLCanvasElement>('#grain')!, !reduced);
   const trailTick = reduced ? null : initTrail(palette);
-  initReveals(); initScratch(reduced, palette);
+  initReveals(); initStory(reduced); initGallery(reduced);
   initBackdrop(reduced);
   const media = createMedia(world, reduced);
   initServices({ reduced, lenis, world, audio, media: () => media });
@@ -75,15 +76,8 @@ async function boot() {
 
   // theme: header / AR switch to black ink while over the white zone, hint hides after the hero
   const whites = qsa('.white-zone'), hint = qs('.scroll-hint')!;
-  const theme = () => { root.classList.toggle('on-light', whites.some((z) => { const r = z.getBoundingClientRect(); return r.top <= 40 && r.bottom >= 40; })); (hint as HTMLElement).style.opacity = scrollY > innerHeight * 0.4 ? '0' : '1'; };
+  const theme = () => { root.classList.toggle('on-light', whites.some((z) => { const r = z.getBoundingClientRect(); return r.top <= 40 && r.bottom >= 40; })); (hint as HTMLElement).style.opacity = scrollY > innerHeight * 0.4 ? '0' : '1'; root.classList.toggle('past-hero', scrollY > innerHeight * 0.55); };
   addEventListener('scroll', theme, { passive: true }); theme();
-
-  // phone hand-off: a QR panel for the current URL (desktop only)
-  const ar = qs('#ar')!, panel = qs('#ar-panel')!; let qrDone = false;
-  ar.addEventListener('click', async () => {
-    const open = panel.hasAttribute('hidden'); panel.toggleAttribute('hidden', !open); ar.setAttribute('aria-expanded', String(open));
-    if (open && !qrDone) { qrDone = true; const QR = await import('qrcode'); await QR.toCanvas(qs<HTMLCanvasElement>('#qr')!, location.href, { width: 200, margin: 1 }); }
-  });
 
   // pointer + frame loop
   addEventListener('pointermove', (e) => world?.setPointer(e.clientX, e.clientY), { passive: true });

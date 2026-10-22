@@ -24,7 +24,7 @@ export function createMedia(world: World | null, reduced: boolean) {
     show(step: number) { cur = step; apply(); },
     async load() {
       try { const r = await fetch(new URL('media/manifest.json', document.baseURI), { cache: 'no-cache' }); if (r.ok) map = await r.json(); } catch { return; }
-      const hero = (map as Record<string, Entry>).hero; if (hero) world?.setHeroVideo(new URL(hero.src, document.baseURI).href, hero.poster);
+      const hero = (map as Record<string, Entry>).sd; if (hero) world?.setHeroVideo(new URL(hero.src, document.baseURI).href, hero.poster);
       KEYS.forEach((k, i) => {
         const { fig, v } = slot(k); if (!fig || !v || !map[k]) return;
         v.addEventListener('loadeddata', () => { fig.dataset.ready = 'true'; world?.setHasMedia(i, true); }, { once: true });

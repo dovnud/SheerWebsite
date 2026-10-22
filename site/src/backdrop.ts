@@ -1,7 +1,7 @@
 import { qs } from './util';
 
 /** Decorative background film in the section after the hero. Muted, looped, no controls, never focusable or clickable.
-    manifest.json key "backdrop" supplies the real footage; until then a slow abstract light canvas stands in. It only
+    manifest.json key "reel" supplies the real footage; until then a slow abstract light canvas stands in. It only
     runs while on screen, and holds a still frame under reduced motion. */
 export function initBackdrop(reduced: boolean) {
   const box = qs<HTMLElement>('[data-bgvid]'); if (!box) return;
@@ -30,7 +30,7 @@ export function initBackdrop(reduced: boolean) {
   void (async () => {
     try {
       const r = await fetch(new URL('media/manifest.json', document.baseURI), { cache: 'no-cache' }); if (!r.ok) return;
-      const m = (await r.json()) as Record<string, { src: string; poster?: string } | null>; const e = m.backdrop; if (!e) return;
+      const m = (await r.json()) as Record<string, { src: string; poster?: string } | null>; const e = m.reel; if (!e) return;
       v.addEventListener('loadeddata', () => { real = true; box.classList.add('live'); cv.style.display = 'none'; if (reduced) v.currentTime = 0.1; sync(); }, { once: true });
       v.addEventListener('error', () => undefined, { once: true });   // keep the placeholder on failure
       if (e.poster) v.poster = new URL(e.poster, document.baseURI).href;

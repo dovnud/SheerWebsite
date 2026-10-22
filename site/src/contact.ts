@@ -6,7 +6,9 @@ import type { AudioEngine } from './audio';
 /** Fullscreen contact overlay (a dialog, not a page). The footer's contact block is cloned into it. */
 export function initContact(opts: { reduced: boolean; lenis: Lenis | null; audio: AudioEngine }) {
   const ov = qs('#contact')!, body = qs('.contact-body', ov)!, openBtn = qs('#contact-open')!, closeBtn = qs('#contact-close')!;
-  const src = qs('[data-contact-src]')!; const clone = src.cloneNode(true) as HTMLElement; clone.removeAttribute('data-contact-src'); body.append(clone);
+  void body;
+  const copy = qs<HTMLButtonElement>('#copy-mail')!, note = qs('#copy-note')!;
+  copy.addEventListener('click', async () => { try { await navigator.clipboard.writeText('Sheer@shows-pro.com'); note.textContent = ' Copied.'; } catch { note.textContent = ' Select the address above to copy it.'; } setTimeout(() => { note.textContent = ''; }, 2400); });
   const inertEls = [qs('#main')!, qs('#site-header')!, qs('#bottom')!];
   let open = false, returnFocus: HTMLElement | null = null;
   const set = (v: boolean) => {

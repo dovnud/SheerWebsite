@@ -1,6 +1,7 @@
 {
-  "backdrop": null,
-  "hero": null,
+  "sd": null,
+  "reel": null,
+  "gallery": [],
   "rouge": null,
   "wow": null,
   "extravaganza": null
