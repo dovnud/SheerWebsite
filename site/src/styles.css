@@ -349,3 +349,17 @@ body:not(.entered) .hero-tag { opacity: 0; }
 .contact-facts { display: grid; row-gap: 22px; margin: 0; }
 .contact-facts dt { opacity: 0.6; margin-bottom: 6px; } .contact-facts dd { margin: 0; line-height: 1.25; } .contact-facts dd + dd { margin-top: 4px; }
 .contact-mark { color: var(--metal-ink); }
+
+/* ---- story reveal variants (see story.ts) ---- */
+.story-text .ln { display: block; position: relative; width: fit-content; max-width: 100%; white-space: nowrap; }
+.story-text .li { display: inline-block; will-change: opacity, clip-path; }
+[data-reveal="spotlight"] .li { opacity: 0.12; }
+.story-beam { position: absolute; left: -6%; width: 112%; height: 7.5em; top: 0; pointer-events: none; opacity: 0; transition: transform 0.35s var(--ease-out), opacity 0.4s linear;
+  background: radial-gradient(ellipse 50% 50% at 50% 50%, rgba(232, 190, 110, 0.42), rgba(232, 190, 110, 0.12) 55%, transparent 75%); }
+[data-reveal="sweep"] .li { clip-path: inset(-4px 100% -4px 0); }
+.bar { position: absolute; left: 0; top: 10%; bottom: 10%; width: 5px; margin-left: -2px; background: linear-gradient(180deg, #f2d98f, #b98d38); box-shadow: 0 0 14px rgba(232, 190, 110, 0.9); opacity: 0; pointer-events: none; }
+[data-reveal="curtain"] .story-card { overflow: hidden; }
+.curtain { position: absolute; inset: 0; z-index: 3; pointer-events: none; overflow: hidden; }
+.cp { position: absolute; top: 0; bottom: 0; width: 50.4%; will-change: transform;
+  background: linear-gradient(180deg, rgba(0, 0, 0, 0.35), transparent 22%, transparent 78%, rgba(0, 0, 0, 0.3)), repeating-linear-gradient(90deg, #4a0814 0, #86152a 26px, #4a0814 52px); }
+.cp.l { left: 0; box-shadow: inset -3px 0 0 #c9a24b, 8px 0 28px rgba(0, 0, 0, 0.35); } .cp.r { right: 0; box-shadow: inset 3px 0 0 #c9a24b, -8px 0 28px rgba(0, 0, 0, 0.35); }
