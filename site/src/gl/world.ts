@@ -150,8 +150,10 @@ export class World {
   /** Review hook: freeze the liquid exit at a chosen point (0 just started, 1 gone). */
   debugLiquid(p: number) { this.liquidTl?.kill(); this.liquidState = 'running'; if (this.liquid) this.liquid.P.value = p; this.dirty = true; }
   /** First scroll away from the top: the glass SD turns to liquid, crawls across the screen and drains away. It does not come back. */
+  /** The melt-away exit is switched off: the glass SD stays in the hero. Set true to bring it back. */
+  private static readonly LIQUID_EXIT = false;
   onScroll(y: number) {
-    if (!this.ready || this.liquidState !== 'rest' || this.intro.t < 0.95 || y <= 2 || y > this.vh * 0.7) return;
+    if (!World.LIQUID_EXIT || !this.ready || this.liquidState !== 'rest' || this.intro.t < 0.95 || y <= 2 || y > this.vh * 0.7) return;
     if (this.o.reduced || !this.liquid) { this.liquidState = 'gone'; this.dirty = true; return; }   // reduced motion: it simply goes
     this.liquidState = 'running'; this.liquid.P.value = 0; this.onLiquidStart?.();
     this.liquidTl = gsap.to(this.liquid.P, { value: 1, duration: 3.8, ease: 'power1.in', onUpdate: () => { this.dirty = true; }, onComplete: () => { this.liquidState = 'gone'; this.dirty = true; } });
